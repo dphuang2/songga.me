@@ -1,15 +1,39 @@
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const { username, password } = await req.json();
+function generateRandomString(length: number) {
+  var text = "";
+  var possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-  // Example: Validate credentials (replace with your logic)
-  if (username === "user" && password === "pass") {
-    return NextResponse.json({ message: "Login successful" }, { status: 200 });
-  } else {
-    return NextResponse.json(
-      { message: "Invalid credentials" },
-      { status: 401 }
-    );
+  for (var i = 0; i < length; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
+  return text;
+}
+
+export async function POST(req: Request) {
+  var scope =
+    "streaming \
+               user-read-email \
+               user-read-private";
+
+  var state = generateRandomString(16);
+
+  let spotify_client_id = process.env.SPOTIFY_CLIENT_ID;
+
+  if (spotify_client_id === undefined)
+    throw Error("Missing SPOTIFY_CLIENT_ID environment variable");
+
+  var auth_query_parameters = new URLSearchParams({
+    response_type: "code",
+    client_id: spotify_client_id,
+    scope: scope,
+    redirect_uri: "http://localhost:3000/api/auth/callback",
+    state: state,
+  });
+
+  return NextResponse.redirect(
+    "https://accounts.spotify.com/authorize/?" +
+      auth_query_parameters.toString()
+  );
 }
