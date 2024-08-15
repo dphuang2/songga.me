@@ -44,9 +44,8 @@ export async function GET(req: Request) {
   return new Promise((resolve, reject) => {
     request.post(authOptions, function (error, response, body) {
       if (!error && response.statusCode === 200) {
-        const access_token = body.access_token;
         // Generate a JWT token with the access token
-        const jwtToken = jwt.sign({ access_token }, jwt_secret);
+        const jwtToken = jwt.sign(body, jwt_secret);
         // Redirect or respond as needed with the JWT token
         const url = new URL(req.url);
         const newSearchParams = new URLSearchParams();
