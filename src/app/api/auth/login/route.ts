@@ -11,7 +11,7 @@ function generateRandomString(length: number) {
   return text;
 }
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   var scope =
     "streaming \
                user-read-email \

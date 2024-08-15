@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import request from "request"; // Ensure you have the 'request' package installed
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
 
@@ -48,7 +48,12 @@ export async function POST(req: Request) {
         // Generate a JWT token with the access token
         const jwtToken = jwt.sign({ access_token }, jwt_secret);
         // Redirect or respond as needed with the JWT token
-        resolve(NextResponse.redirect(`/?jwt_token=${jwtToken}`));
+        const url = new URL(req.url);
+        const newSearchParams = new URLSearchParams();
+        newSearchParams.append("jwt_token", jwtToken);
+        url.search = newSearchParams.toString();
+        url.pathname = "/";
+        resolve(NextResponse.redirect(url.toString()));
       } else {
         reject(
           NextResponse.json(
