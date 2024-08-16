@@ -5,6 +5,8 @@ import { Database } from "./database.types";
 export function createServerClient() {
   const cookieStore = cookies();
 
+  console.log(cookieStore.getAll());
+
   // Create a server's supabase client with newly configured cookie,
   // which could be used to maintain user's session
   return createSupabaseClient<Database>(
