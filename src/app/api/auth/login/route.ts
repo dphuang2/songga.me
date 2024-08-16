@@ -14,8 +14,9 @@ function generateRandomString(length: number) {
 export async function GET(req: Request) {
   var scope =
     "streaming \
-               user-read-email \
-               user-read-private";
+      user-read-playback-state \
+      user-read-currently-playing \
+      user-read-email";
 
   var state = generateRandomString(16);
 
