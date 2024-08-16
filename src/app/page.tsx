@@ -1,6 +1,6 @@
 import Game from "./component/Game";
 
-export default function Home() {
+export default async function Home() {
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <div>
