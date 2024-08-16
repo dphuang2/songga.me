@@ -26,32 +26,8 @@ export default async function Index() {
             identify the artist and song in the shortest time
           </li>
           <li>
-            The <span style={{ color: "blue" }}>picker</span> earns 1 point if
-            the song is correctly identified within the first 50 seconds.
-          </li>
-          <li>
-            The 1st <span style={{ color: "green" }}>guesser</span> to correctly
-            identify the artist or song earns 3 points.
-          </li>
-          <li>
-            The 2nd <span style={{ color: "green" }}>guesser</span> to correctly
-            identify the artist or song earns 2 points.
-          </li>
-          <li>
-            The 3rd <span style={{ color: "green" }}>guesser</span> to correctly
-            identify the artist or song earns 1 point.
-          </li>
-          <li>
-            Each <span style={{ color: "green" }}>guesser</span> is limited to 2
-            attempts to guess either the artist or the song.
-          </li>
-          <li>
             The role of the <span style={{ color: "blue" }}>picker</span>{" "}
             rotates among players in a round-robin manner.
-          </li>
-          <li>
-            The game can be concluded at any point, with the team(s) having the
-            highest score declared the winner(s).
           </li>
         </ul>
         {user ? <CreateAGameButton /> : <SignInWithSpotifyButton />}

@@ -5,14 +5,14 @@ export default function Game({ params }: { params: { game: string } }) {
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <div>
-        <div className="text-3xl pb-6 font-bold underline">Game Awaits...</div>
-        <ol className="list-decimal pl-5 pb-3">
+        <h2 className="text-2xl font-semibold">How to start the game</h2>
+        <ol className="list-decimal pl-5 pb-2">
           <GameInstructions link={link} />
         </ol>
         <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-3">
           Start Game
         </button>
-        <div className="text-2xl font-semibold mt-6">Who's Playing?</div>
+        <div className="text-2xl font-semibold mt-6">Players</div>
         <ul className="list-disc pl-5">
           <li>Player 1</li>
           <li>Player 2</li>
