@@ -7,8 +7,6 @@ export default async function Index() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log(user);
-
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <div>
@@ -57,7 +55,7 @@ export default async function Index() {
         </ul>
         {user ? (
           <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Spotify Connected - Start a game
+            Spotify Connected - Create a Game
           </button>
         ) : (
           <SignInWithSpotifyButton />
