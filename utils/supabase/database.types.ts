@@ -38,6 +38,42 @@ export type Database = {
           },
         ]
       }
+      game_user_membership: {
+        Row: {
+          created_at: string
+          game_id: number
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: number
+          id?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: number
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_user_membership_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "game"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_user_membership_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

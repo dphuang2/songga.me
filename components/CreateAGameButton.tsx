@@ -37,7 +37,7 @@ export function CreateAGameButton() {
     console.log(spotifyProfile);
 
     // 1. Create a game row
-    const { data, error } = await supabase
+    const { data: game, error: gameError } = await supabase
       .from("game")
       .insert([
         {
@@ -46,11 +46,25 @@ export function CreateAGameButton() {
         },
       ])
       .select();
-    if (error) {
-      console.error(error);
-    }
+    if (gameError) console.error(gameError);
 
-    // 2. Add self to game
+    if (game === null || game.length === 0) throw new Error("No game created.");
+
+    // // 2. Add self to game
+    // const { error: membershipError } = await supabase
+    //   .from("game_user_membership")
+    //   .insert([
+    //     {
+    //       user_id: user.id,
+    //       game_id: game[0].id,
+    //     },
+    //   ])
+    //   .select();
+    // if (membershipError) {
+    //   console.error(membershipError);
+    // }
+
+    window.location.href = `/${game[0].slug}`;
   };
   return (
     <button
