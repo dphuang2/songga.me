@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
   title: "Song Game",
   description: "Guess the song before the others!",
@@ -9,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={GeistSans.className}>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );
