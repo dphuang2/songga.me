@@ -1,4 +1,5 @@
 import Game from "./component/Game";
+import MyComponent from "./component/MyComponent";
 
 export default async function Home() {
   return (
@@ -47,6 +48,8 @@ export default async function Home() {
             highest score declared the winner(s).
           </li>
         </ul>
+
+        <MyComponent />
         <Game />
       </div>
     </main>
