@@ -1,40 +1,46 @@
 "use client";
 
+import { createBrowserClient } from "@/utils/supabase/client";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import React, { useState, useEffect } from "react";
 
 const Game: React.FC = () => {
-  const [jwtToken, setJwtToken] = useState<string | null>(null); // Add state for jwtToken
-
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const urlToken = url.searchParams.get("jwt_token");
-    const storedToken = localStorage.getItem("jwt_token");
-    if (urlToken) {
-      localStorage.setItem("jwt_token", urlToken);
-      setJwtToken(urlToken); // Set the jwtToken state
-    } else if (storedToken) {
-      setJwtToken(storedToken); // Set the jwtToken state from localStorage
-    }
-  }, []);
-
   return (
     <>
-      {jwtToken ? ( // Render WebPlayback if jwtToken is present
-        <WebPlayback
-          token={JSON.parse(atob(jwtToken.split(".")[1])).access_token}
-        />
-      ) : (
-        <a href="/api/auth/login">
-          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Connect Spotify To Start Game
-          </button>
-        </a>
-      )}
+      <button
+        onClick={async () => {
+          await signInWithSpotify();
+        }}
+        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Connect Spotify To Start Game
+      </button>
     </>
   );
 };
+
+async function signInWithSpotify() {
+  const supabase = createBrowserClient();
+  debugger;
+  const scopes =
+    "streaming \
+     user-read-currently-playing \
+     user-read-email \
+     user-read-playback-state \
+     user-modify-playback-state";
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "spotify",
+    options: {
+      scopes,
+    },
+  });
+  if (error !== null) {
+    console.error(error);
+    return error;
+  }
+  return data;
+}
 
 type Track = {
   name: string;
