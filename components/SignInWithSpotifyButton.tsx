@@ -18,8 +18,9 @@ async function signInWithSpotify() {
     "streaming \
       user-read-playback-state \
       user-read-currently-playing \
+      user-top-read \
       user-read-email";
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const { error } = await supabase.auth.signInWithOAuth({
     provider: "spotify",
     options: {
       scopes,

@@ -12,32 +12,31 @@ export type Database = {
       game: {
         Row: {
           created_at: string
+          creator: string
           id: number
+          slug: string
         }
         Insert: {
           created_at?: string
+          creator: string
           id?: number
+          slug?: string
         }
         Update: {
           created_at?: string
+          creator?: string
           id?: number
+          slug?: string
         }
-        Relationships: []
-      }
-      notes: {
-        Row: {
-          id: number
-          title: string
-        }
-        Insert: {
-          id?: never
-          title: string
-        }
-        Update: {
-          id?: never
-          title?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "game_creator_fkey"
+            columns: ["creator"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

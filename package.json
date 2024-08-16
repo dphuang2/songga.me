@@ -7,10 +7,12 @@
     "gen": "supabase gen types --lang=typescript --project-id whzacxunzrrevhhspmgt --schema public > ./utils/supabase/database.types.ts"
   },
   "dependencies": {
+    "@spotify/web-api-ts-sdk": "^1.2.0",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "autoprefixer": "10.4.17",
     "geist": "^1.2.1",
+    "human-id": "^4.1.1",
     "next": "latest",
     "postcss": "8.4.33",
     "react": "18.2.0",
