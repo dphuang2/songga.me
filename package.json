@@ -6,23 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "login": "supabase login",
-    "generate": "supabase gen types typescript --project-id whzacxunzrrevhhspmgt > ./src/utils/supabase/database.types.ts"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@spotify/web-api-ts-sdk": "^1.2.0",
-    "@supabase/ssr": "^0.4.0",
-    "@supabase/supabase-js": "^2.45.1",
-    "axios": "^1.7.4",
     "jsonwebtoken": "^9.0.2",
     "mobx": "^6.13.1",
     "mobx-react-lite": "^4.0.7",
     "next": "14.2.5",
     "react": "^18",
     "react-dom": "^18",
-    "request": "^2.88.2",
-    "supabase": "^1.190.0"
+    "request": "^2.88.2"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.6",
