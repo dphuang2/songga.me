@@ -1,8 +1,9 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import { createClient, SpotifyAuthStorage } from "@/utils/supabase/client";
 import humanId from "human-id";
 import { AccessToken, SpotifyApi } from "@spotify/web-api-ts-sdk";
+import { SPOTIFY_SCOPES } from "./SignInWithSpotifyButton";
 
 export function CreateAGameButton() {
   const supabase = createClient();
@@ -16,27 +17,32 @@ export function CreateAGameButton() {
       throw new Error("User not found. Please sign in to create a game.");
     }
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const savedSpotifyAccessToken = SpotifyAuthStorage.getSavedAccessToken();
 
-    console.log(session);
+    if (savedSpotifyAccessToken === null)
+      throw new Error(
+        "No Spotify access token found. Please authenticate with Spotify."
+      );
 
-    const spotifyAccessToken: AccessToken = {
-      access_token: session!.provider_token!,
-      refresh_token: session!.provider_refresh_token!,
-      token_type: session!.token_type,
-      expires_in: session!.expires_in,
-    };
+    console.log(savedSpotifyAccessToken);
+
+    // 1. Always refresh access token and save it
+    const spotifyAccessToken = await SpotifyAuthStorage.refreshAccessToken(
+      savedSpotifyAccessToken.refresh_token
+    );
+
+    // Without this, the Spotify API throws an error when authenticating for some reason
+    delete spotifyAccessToken["expires"];
     const spotify = SpotifyApi.withAccessToken(
       process.env.NEXT_PUBLIC_SPOTIFY_ID!,
       spotifyAccessToken
     );
 
-    const spotifyProfile = await spotify.currentUser.topItems("artists");
-    console.log(spotifyProfile);
+    const spotifyProfile = await spotify.currentUser.profile();
+    const topArtists = await spotify.currentUser.topItems("artists");
+    console.log(spotifyProfile, topArtists);
 
-    // 1. Create a game row
+    // 2. Create a game row
     const { data: game, error: gameError } = await supabase
       .from("game")
       .insert([

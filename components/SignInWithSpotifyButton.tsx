@@ -12,18 +12,19 @@ export function SignInWithSpotifyButton() {
   );
 }
 
-async function signInWithSpotify() {
-  const supabase = createClient();
-  var scopes =
-    "streaming \
+export const SPOTIFY_SCOPES =
+  "streaming \
       user-read-playback-state \
       user-read-currently-playing \
       user-top-read \
       user-read-email";
+
+async function signInWithSpotify() {
+  const supabase = createClient();
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "spotify",
     options: {
-      scopes,
+      scopes: SPOTIFY_SCOPES,
       redirectTo: "http://localhost:3000/auth/callback",
     },
   });

@@ -10,9 +10,11 @@ export default async function Index() {
 
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
-      <div>
-        <div className="text-3xl pb-6 font-bold underline">Song Game</div>
-        <ul className="list-disc pl-5 pb-3">
+      <article className="prose lg:prose-xl">
+        <h1>Song Game</h1>
+        <h2>How does it work?</h2>
+        <p>Its quite simple, actually.</p>
+        <ul>
           <li>
             1 player picks a song (<span style={{ color: "blue" }}>picker</span>
             )
@@ -30,8 +32,9 @@ export default async function Index() {
             rotates among players in a round-robin manner.
           </li>
         </ul>
+        <h2>Create a game!</h2>
         {user ? <CreateAGameButton /> : <SignInWithSpotifyButton />}
-      </div>
+      </article>
     </main>
   );
 }
