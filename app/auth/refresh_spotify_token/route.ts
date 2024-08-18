@@ -1,3 +1,4 @@
+import { AccessToken } from "@spotify/web-api-ts-sdk";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -31,7 +32,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       access_token: data.access_token,
       refresh_token: data.refresh_token || refresh_token,
-    });
+      token_type: data.token_type,
+      expires_in: data.expires_in,
+    } as AccessToken);
   } else {
     return NextResponse.json(
       { error: "Failed to refresh token" },
