@@ -33,8 +33,7 @@ export async function MobileClient({
 
 async function setupUser({ gameId }: { gameId: number }): Promise<User> {
   // 1. Sign up/in
-  const user = await signInAnonymously();
-  const supabase = createClient();
+  const { user, supabase } = await signInAnonymously();
 
   // 1.a If user is already on team in this game, then return early
   const teamsWithGameQuery = supabase
@@ -69,8 +68,8 @@ async function setupUser({ gameId }: { gameId: number }): Promise<User> {
     .from("team")
     .insert([{ game_id: gameId }])
     .select();
-  if (team === null) throw Error("could not create team");
   if (error) throw error;
+  if (team === null) throw Error("could not create team");
 
   // 3. Create user to team relationship
   const { error: userToTeamRelationshipError } = await supabase
@@ -86,12 +85,12 @@ async function setupUser({ gameId }: { gameId: number }): Promise<User> {
   return user;
 }
 
-async function signInAnonymously(): Promise<User> {
+async function signInAnonymously(): Promise<{
+  user: User;
+  supabase: ReturnType<typeof createClient>;
+}> {
   const supabase = createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error) {
-    console.error("Error:", error);
-  }
+  const { data } = await supabase.auth.getUser();
   const currentUser = data.user;
   if (currentUser === null) {
     const { data: anonymousUser, error } =
@@ -106,7 +105,7 @@ async function signInAnonymously(): Promise<User> {
     if (anonymousUser.user === null) {
       throw new Error("User data is null");
     }
-    return anonymousUser.user;
+    return { user: anonymousUser.user, supabase };
   }
-  return currentUser;
+  return { user: currentUser, supabase };
 }
