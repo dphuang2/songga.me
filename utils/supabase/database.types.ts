@@ -38,29 +38,80 @@ export type Database = {
           },
         ]
       }
-      game_user_membership: {
+      team: {
         Row: {
           created_at: string
-          game_id: number
           id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      team_game_membership: {
+        Row: {
+          created_at: string
+          game_id: number | null
+          id: number
+          team_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          game_id?: number | null
+          id?: number
+          team_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          game_id?: number | null
+          id?: number
+          team_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_game_membership_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "game"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_game_membership_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "team"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_team_membership: {
+        Row: {
+          created_at: string
+          id: number
+          team_id: number
           user_id: string
         }
         Insert: {
           created_at?: string
-          game_id: number
           id?: number
+          team_id: number
           user_id: string
         }
         Update: {
           created_at?: string
-          game_id?: number
           id?: number
+          team_id?: number
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "game_user_membership_game_id_fkey"
-            columns: ["game_id"]
+            columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "game"
             referencedColumns: ["id"]
