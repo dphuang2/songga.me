@@ -41,50 +41,25 @@ export type Database = {
       team: {
         Row: {
           created_at: string
+          game_id: number
           id: number
         }
         Insert: {
           created_at?: string
+          game_id: number
           id?: number
         }
         Update: {
           created_at?: string
+          game_id?: number
           id?: number
-        }
-        Relationships: []
-      }
-      team_game_membership: {
-        Row: {
-          created_at: string
-          game_id: number | null
-          id: number
-          team_id: number | null
-        }
-        Insert: {
-          created_at?: string
-          game_id?: number | null
-          id?: number
-          team_id?: number | null
-        }
-        Update: {
-          created_at?: string
-          game_id?: number | null
-          id?: number
-          team_id?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "team_game_membership_game_id_fkey"
+            foreignKeyName: "team_game_id_fkey"
             columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "game"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "team_game_membership_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "team"
             referencedColumns: ["id"]
           },
         ]
@@ -110,17 +85,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "game_user_membership_game_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "game"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "game_user_membership_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_team_membership_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "team"
             referencedColumns: ["id"]
           },
         ]
