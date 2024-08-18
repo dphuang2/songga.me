@@ -21,15 +21,21 @@ export default async function Game({ params }: { params: { game: string } }) {
   const link = `songga.me/${params.game}`;
   const isMobile = isMobileDevice();
   return (
-    <div>{isMobile ? <Mobile link={link} /> : <Desktop link={link} />}</div>
+    <div>
+      {true ? (
+        <Mobile gameId={existingGame.data[0].id} link={link} />
+      ) : (
+        <Desktop link={link} />
+      )}
+    </div>
   );
 }
 
-function Mobile({ link }: { link: string }) {
+async function Mobile({ link, gameId }: { link: string; gameId: number }) {
   return (
     <main className="container mx-auto py-16 flex flex-col justify-center items-center px-4">
       <article className="prose">
-        <MobileClient link={link} />
+        <MobileClient gameId={gameId} link={link} />
         <h3>Want to invite others?</h3>
         <p>Share this QR code for anyone else who wants to play</p>
         <QRCodeGenerator url={link} />

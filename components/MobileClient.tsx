@@ -1,23 +1,17 @@
-"use client";
-
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/utils/supabase/server";
 import { User } from "@supabase/auth-js";
 import humanId from "human-id";
-import { useEffect, useState } from "react";
 import LivePlayerList from "./LivePlayerList";
 import { LiveIndicator } from "./LiveIndicator";
 
-export function MobileClient({
+export async function MobileClient({
   link,
   gameId,
 }: {
   link: string;
   gameId: number;
 }) {
-  const [user, setUser] = useState<User | null>(null);
-  useEffect(() => {
-    setupUser({ gameId }).then((user) => setUser(user));
-  }, []);
+  const user = await setupUser({ gameId });
   return (
     <>
       <p className="text-sm text-gray-400">
@@ -57,7 +51,6 @@ async function setupUser({ gameId }: { gameId: number }): Promise<User> {
   const { data: teamsWithGame, error: teamsQueryError } =
     await teamsWithGameQuery;
   if (teamsQueryError) throw teamsQueryError;
-  console.log("teamsWithGame", teamsWithGame);
 
   // Find all memberships of teams that match any of the teams in the previous query
   const { count, error: membershipQueryError } = await supabase
@@ -70,7 +63,6 @@ async function setupUser({ gameId }: { gameId: number }): Promise<User> {
     );
   if (membershipQueryError) throw membershipQueryError;
   if (count !== null && count > 0) return user;
-  console.log("Creating team");
 
   // 2. Create team
   const { data: team, error } = await supabase
