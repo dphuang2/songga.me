@@ -11,6 +11,7 @@ export async function isPlayerOnAnyTeam({
 }): Promise<boolean> {
   const teamsWithGameQuery = supabase
     .from("team")
+    // Using "!inner" allows us to filter on the referenced table's colun value
     .select(`id, game(id), player!inner(id)`, { count: "exact", head: true })
     .eq("game_id", gameId)
     .filter("player.id", "eq", playerId);
