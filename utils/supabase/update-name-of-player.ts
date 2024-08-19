@@ -16,5 +16,4 @@ export async function updateNameOfPlayer({
     .eq("id", playerId)
     .select("*");
   if (error) console.error(error);
-  console.log(data);
 }

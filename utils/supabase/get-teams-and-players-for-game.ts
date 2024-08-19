@@ -1,15 +1,14 @@
 "use server";
 
 import { Players } from "@/components/LivePlayerList";
-import { SupabaseServerClient } from "./server";
+import { createClient } from "./server";
 
 export async function getTeamsAndPlayersForGame({
   gameId,
-  supabase,
 }: {
   gameId: number;
-  supabase: SupabaseServerClient;
 }): Promise<Players> {
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("game")
     .select("*, team(*, player(*))")

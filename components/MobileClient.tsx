@@ -12,7 +12,7 @@ export async function MobileClient({
   gameId: number;
 }) {
   const { player, supabase } = await setupUserForGame({ gameId });
-  const players = await getTeamsAndPlayersForGame({ gameId, supabase });
+  const players = await getTeamsAndPlayersForGame({ gameId });
   return (
     <>
       <p className="text-sm text-gray-400">
@@ -28,7 +28,7 @@ export async function MobileClient({
       <h3>
         Players waiting to have fun! <LiveIndicator />
       </h3>
-      <LivePlayerList initialPlayerList={players} />
+      <LivePlayerList gameId={gameId} initialPlayerList={players} />
     </>
   );
 }
