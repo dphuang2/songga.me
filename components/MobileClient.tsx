@@ -1,9 +1,7 @@
-import { createClient, SupabaseServerClient } from "@/utils/supabase/server";
-import LivePlayerList, { Players } from "./LivePlayerList";
+import LivePlayerList from "./LivePlayerList";
 import { LiveIndicator } from "./LiveIndicator";
-import { Tables } from "@/utils/supabase/database.types";
-import { getUserAndPlayer } from "@/utils/supabase/get-user-and-player";
-import { isPlayerOnAnyTeam } from "@/utils/supabase/is-player-on-any-team";
+import { setupUserForGame } from "@/utils/supabase/setup-user-for-game";
+import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 
 export async function MobileClient({
   link,
@@ -12,7 +10,8 @@ export async function MobileClient({
   link: string;
   gameId: number;
 }) {
-  const { player, supabase } = await setupUser({ gameId });
+  const { player, supabase } = await setupUserForGame({ gameId });
+  const players = await getTeamsAndPlayersForGame({ gameId, supabase });
   return (
     <>
       <p className="text-sm text-gray-400">
@@ -27,67 +26,7 @@ export async function MobileClient({
       <h3>
         Players waiting to have fun! <LiveIndicator />
       </h3>
-      <LivePlayerList
-        initialPlayerList={await getTeamsAndPlayersForGame({
-          gameId,
-          supabase,
-        })}
-      />
+      <LivePlayerList initialPlayerList={players} />
     </>
   );
-}
-
-async function getTeamsAndPlayersForGame({
-  gameId,
-  supabase,
-}: {
-  gameId: number;
-  supabase: SupabaseServerClient;
-}): Promise<Players> {
-  // const { data, error } = await supabase
-  //   .from("game")
-  //   .select("*, team(id, user_team_membership(*))")
-  //   .eq("id", gameId);
-  // if (error) console.error(error);
-  // console.log("getPlayers", JSON.stringify(data, null, 2));
-  return [];
-}
-
-async function setupUser({
-  gameId,
-}: {
-  gameId: number;
-}): Promise<{ player: Tables<"player">; supabase: SupabaseServerClient }> {
-  const supabase = createClient();
-  // 1. Sign up/in
-  const { player } = await getUserAndPlayer({ supabase });
-
-  // 2. If user is already on team in this game, then return early
-  const doNotCreateTeam = await isPlayerOnAnyTeam({
-    supabase,
-    gameId,
-    playerId: player.id,
-  });
-  if (doNotCreateTeam) return { player, supabase };
-
-  // 3. Create team
-  const { data: team, error } = await supabase
-    .from("team")
-    .insert([{ game_id: gameId }])
-    .select();
-  if (error) throw error;
-  if (team === null) throw Error("could not create team");
-
-  // 4. Create player to team relationship
-  const { error: userToTeamRelationshipError } = await supabase
-    .from("player_team_membership")
-    .insert([
-      {
-        team_id: team[0].id,
-        player_id: player.id,
-      },
-    ]);
-  if (userToTeamRelationshipError) throw userToTeamRelationshipError;
-
-  return { player: player, supabase };
 }
