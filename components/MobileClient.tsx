@@ -2,6 +2,7 @@ import LivePlayerList from "./LivePlayerList";
 import { LiveIndicator } from "./LiveIndicator";
 import { setupUserForGame } from "@/utils/supabase/setup-user-for-game";
 import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
+import { PlayerNameInput } from "./PlayerNameInput";
 
 export async function MobileClient({
   link,
@@ -18,9 +19,10 @@ export async function MobileClient({
         Currently in the lobby for <span className="text-blue-300">{link}</span>
       </p>
       <h2 className="text-lg font-semibold">What is your name?</h2>
-      <input
-        className="mt-2 mb-4 p-2 border border-gray-300 rounded-md w-full"
-        placeholder={player.name}
+      <PlayerNameInput
+        name={player.name}
+        customName={player.custom_name}
+        playerId={player.id}
       />
       <hr className="my-4 border-t border-gray-200 w-full" />
       <h3>

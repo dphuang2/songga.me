@@ -41,18 +41,21 @@ export type Database = {
       player: {
         Row: {
           created_at: string
+          custom_name: string | null
           id: number
           name: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          custom_name?: string | null
           id?: number
           name: string
           user_id: string
         }
         Update: {
           created_at?: string
+          custom_name?: string | null
           id?: number
           name?: string
           user_id?: string

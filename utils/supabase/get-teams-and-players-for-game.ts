@@ -17,6 +17,8 @@ export async function getTeamsAndPlayersForGame({
   if (error) console.error(error);
   if (data === null) throw Error("Could not query for all teams in game");
   return data[0].team.map((team) => ({
-    players: team.player.map((player) => ({ name: player.name })),
+    players: team.player.map((player) => ({
+      name: player.custom_name ? player.custom_name : player.name,
+    })),
   }));
 }
