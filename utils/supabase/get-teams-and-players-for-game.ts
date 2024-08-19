@@ -1,3 +1,5 @@
+"use server";
+
 import { Players } from "@/components/LivePlayerList";
 import { SupabaseServerClient } from "./server";
 
