@@ -1,8 +1,9 @@
-import { createClient } from "@/utils/supabase/server";
-import { User } from "@supabase/auth-js";
-import humanId from "human-id";
-import LivePlayerList from "./LivePlayerList";
+import { createClient, SupabaseServerClient } from "@/utils/supabase/server";
+import LivePlayerList, { Players } from "./LivePlayerList";
 import { LiveIndicator } from "./LiveIndicator";
+import { Tables } from "@/utils/supabase/database.types";
+import { getUserAndPlayer } from "@/utils/supabase/get-user-and-player";
+import { isPlayerOnAnyTeam } from "@/utils/supabase/is-player-on-any-team";
 
 export async function MobileClient({
   link,
@@ -11,7 +12,7 @@ export async function MobileClient({
   link: string;
   gameId: number;
 }) {
-  const user = await setupUser({ gameId });
+  const { player, supabase } = await setupUser({ gameId });
   return (
     <>
       <p className="text-sm text-gray-400">
@@ -20,50 +21,56 @@ export async function MobileClient({
       <h2 className="text-lg font-semibold">What is your name?</h2>
       <input
         className="mt-2 mb-4 p-2 border border-gray-300 rounded-md w-full"
-        placeholder={user?.user_metadata["name"]}
+        placeholder={player.name}
       />
       <hr className="my-4 border-t border-gray-200 w-full" />
       <h3>
-        Look who else is playing with you! <LiveIndicator />
+        Players waiting to have fun! <LiveIndicator />
       </h3>
-      <LivePlayerList initialPlayerList={[{ players: [{ name: "test" }] }]} />
+      <LivePlayerList
+        initialPlayerList={await getTeamsAndPlayersForGame({
+          gameId,
+          supabase,
+        })}
+      />
     </>
   );
 }
 
-async function setupUser({ gameId }: { gameId: number }): Promise<User> {
+async function getTeamsAndPlayersForGame({
+  gameId,
+  supabase,
+}: {
+  gameId: number;
+  supabase: SupabaseServerClient;
+}): Promise<Players> {
+  // const { data, error } = await supabase
+  //   .from("game")
+  //   .select("*, team(id, user_team_membership(*))")
+  //   .eq("id", gameId);
+  // if (error) console.error(error);
+  // console.log("getPlayers", JSON.stringify(data, null, 2));
+  return [];
+}
+
+async function setupUser({
+  gameId,
+}: {
+  gameId: number;
+}): Promise<{ player: Tables<"player">; supabase: SupabaseServerClient }> {
+  const supabase = createClient();
   // 1. Sign up/in
-  const { user, supabase } = await signInAnonymously();
+  const { player } = await getUserAndPlayer({ supabase });
 
-  // 1.a If user is already on team in this game, then return early
-  const teamsWithGameQuery = supabase
-    .from("team")
-    .select(
-      `
-    id,
-    game (
-      id
-    )
-    `
-    )
-    .eq("game_id", gameId);
-  const { data: teamsWithGame, error: teamsQueryError } =
-    await teamsWithGameQuery;
-  if (teamsQueryError) throw teamsQueryError;
+  // 2. If user is already on team in this game, then return early
+  const doNotCreateTeam = await isPlayerOnAnyTeam({
+    supabase,
+    gameId,
+    playerId: player.id,
+  });
+  if (doNotCreateTeam) return { player, supabase };
 
-  // Find all memberships of teams that match any of the teams in the previous query
-  const { count, error: membershipQueryError } = await supabase
-    .from("user_team_membership")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .in(
-      "team_id",
-      teamsWithGame.map((team) => team.id)
-    );
-  if (membershipQueryError) throw membershipQueryError;
-  if (count !== null && count > 0) return user;
-
-  // 2. Create team
+  // 3. Create team
   const { data: team, error } = await supabase
     .from("team")
     .insert([{ game_id: gameId }])
@@ -71,41 +78,16 @@ async function setupUser({ gameId }: { gameId: number }): Promise<User> {
   if (error) throw error;
   if (team === null) throw Error("could not create team");
 
-  // 3. Create user to team relationship
+  // 4. Create player to team relationship
   const { error: userToTeamRelationshipError } = await supabase
-    .from("user_team_membership")
+    .from("player_team_membership")
     .insert([
       {
         team_id: team[0].id,
-        user_id: user.id,
+        player_id: player.id,
       },
     ]);
   if (userToTeamRelationshipError) throw userToTeamRelationshipError;
 
-  return user;
-}
-
-async function signInAnonymously(): Promise<{
-  user: User;
-  supabase: ReturnType<typeof createClient>;
-}> {
-  const supabase = createClient();
-  const { data } = await supabase.auth.getUser();
-  const currentUser = data.user;
-  if (currentUser === null) {
-    const { data: anonymousUser, error } =
-      await supabase.auth.signInAnonymously({
-        options: {
-          data: {
-            name: humanId(),
-          },
-        },
-      });
-    if (error) console.error(error);
-    if (anonymousUser.user === null) {
-      throw new Error("User data is null");
-    }
-    return { user: anonymousUser.user, supabase };
-  }
-  return { user: currentUser, supabase };
+  return { player: player, supabase };
 }

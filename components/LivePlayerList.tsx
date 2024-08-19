@@ -2,10 +2,12 @@
 
 import React from "react";
 
+export type Players = { players: { name: string }[] }[];
+
 const LivePlayerList = ({
   initialPlayerList,
 }: {
-  initialPlayerList: { players: { name: string }[] }[];
+  initialPlayerList: Players;
 }) => {
   return (
     <ol>

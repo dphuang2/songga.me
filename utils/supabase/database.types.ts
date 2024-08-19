@@ -38,6 +38,71 @@ export type Database = {
           },
         ]
       }
+      player: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_team_membership: {
+        Row: {
+          created_at: string
+          id: number
+          player_id: number
+          team_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          player_id: number
+          team_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          player_id?: number
+          team_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_team_membership_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "player"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_team_membership_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "team"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team: {
         Row: {
           created_at: string
@@ -60,42 +125,6 @@ export type Database = {
             columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "game"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_team_membership: {
-        Row: {
-          created_at: string
-          id: number
-          team_id: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          team_id: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          team_id?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "game_user_membership_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_team_membership_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "team"
             referencedColumns: ["id"]
           },
         ]

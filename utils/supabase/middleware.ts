@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { signInAnonymously } from "./sign-in-anonymously";
 
 export const updateSession = async (request: NextRequest) => {
   // Create an unmodified response
@@ -18,19 +19,23 @@ export const updateSession = async (request: NextRequest) => {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
           response = NextResponse.next({
             request,
           });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
         },
       },
     }
   );
+  // If navigating to a game link, then sign in anonymously if not signed in
+  if (request.url.match(/\/\w+\.\w+\.\w+\/?/)) {
+    await signInAnonymously({ supabase });
+  }
 
   // This will refresh session if expired - required for Server Components
   // https://supabase.com/docs/guides/auth/server-side/nextjs
