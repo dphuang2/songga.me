@@ -5,6 +5,8 @@ import { isMobileDevice } from "@/utils/is-mobile-device";
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import { MobileClient } from "@/components/MobileClient";
+import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
+import { isGameCreator } from "@/utils/supabase/is-game-creator";
 
 export default async function Game({ params }: { params: { game: string } }) {
   const supabase = createClient();
@@ -21,22 +23,31 @@ export default async function Game({ params }: { params: { game: string } }) {
   const link = `songga.me/${params.game}`;
   const isMobile = isMobileDevice();
   const gameId = existingGame.data[0].id;
+  const isCreator = await isGameCreator({ gameId });
   return (
     <div>
       {true ? (
-        <Mobile gameId={gameId} link={link} />
+        <Mobile isCreator={isCreator} gameId={gameId} link={link} />
       ) : (
-        <Desktop gameId={gameId} link={link} />
+        <Desktop isCreator={isCreator} gameId={gameId} link={link} />
       )}
     </div>
   );
 }
 
-async function Mobile({ link, gameId }: { link: string; gameId: number }) {
+async function Mobile({
+  link,
+  gameId,
+  isCreator,
+}: {
+  link: string;
+  gameId: number;
+  isCreator: boolean;
+}) {
   return (
     <main className="container mx-auto py-16 flex flex-col justify-center items-center px-4">
       <article className="prose">
-        <MobileClient gameId={gameId} link={link} />
+        <MobileClient isGameCreator={isCreator} gameId={gameId} link={link} />
         <h3>Want to invite others?</h3>
         <p>Share this QR code for anyone else who wants to play</p>
         <QRCodeGenerator url={link} />
@@ -45,7 +56,16 @@ async function Mobile({ link, gameId }: { link: string; gameId: number }) {
   );
 }
 
-function Desktop({ link, gameId }: { link: string; gameId: number }) {
+async function Desktop({
+  link,
+  gameId,
+  isCreator,
+}: {
+  link: string;
+  gameId: number;
+  isCreator: boolean;
+}) {
+  const players = await getTeamsAndPlayersForGame({ gameId });
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <article className="prose">
@@ -73,7 +93,11 @@ function Desktop({ link, gameId }: { link: string; gameId: number }) {
         <h2>
           Cool people waiting to play <LiveIndicator />
         </h2>
-        <LivePlayerList gameId={gameId} initialPlayerList={[]} />
+        <LivePlayerList
+          isGameCreator={isCreator}
+          gameId={gameId}
+          initialPlayerList={players}
+        />
       </article>
     </main>
   );

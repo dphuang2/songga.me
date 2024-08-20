@@ -7,9 +7,11 @@ import { PlayerNameInput } from "./PlayerNameInput";
 export async function MobileClient({
   link,
   gameId,
+  isGameCreator,
 }: {
   link: string;
   gameId: number;
+  isGameCreator: boolean;
 }) {
   const { player, supabase } = await setupUserForGame({ gameId });
   const players = await getTeamsAndPlayersForGame({ gameId });
@@ -28,7 +30,11 @@ export async function MobileClient({
       <h3>
         Players waiting to have fun! <LiveIndicator />
       </h3>
-      <LivePlayerList gameId={gameId} initialPlayerList={players} />
+      <LivePlayerList
+        isGameCreator={isGameCreator}
+        gameId={gameId}
+        initialPlayerList={players}
+      />
     </>
   );
 }

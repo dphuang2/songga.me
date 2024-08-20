@@ -16,6 +16,5 @@ export async function kickPlayerFromGame({
     .eq("player_id", playerId)
     .eq("team_id", teamId)
     .select();
-  if (error) console.error(error);
-  return;
+  if (error) throw error;
 }
