@@ -20,12 +20,13 @@ export default async function Game({ params }: { params: { game: string } }) {
 
   const link = `songga.me/${params.game}`;
   const isMobile = isMobileDevice();
+  const gameId = existingGame.data[0].id;
   return (
     <div>
       {true ? (
-        <Mobile gameId={existingGame.data[0].id} link={link} />
+        <Mobile gameId={gameId} link={link} />
       ) : (
-        <Desktop link={link} />
+        <Desktop gameId={gameId} link={link} />
       )}
     </div>
   );
@@ -44,7 +45,7 @@ async function Mobile({ link, gameId }: { link: string; gameId: number }) {
   );
 }
 
-function Desktop({ link }: { link: string }) {
+function Desktop({ link, gameId }: { link: string; gameId: number }) {
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <article className="prose">
@@ -72,7 +73,7 @@ function Desktop({ link }: { link: string }) {
         <h2>
           Cool people waiting to play <LiveIndicator />
         </h2>
-        <LivePlayerList initialPlayerList={[{ players: [{ name: "test" }] }]} />
+        <LivePlayerList gameId={gameId} initialPlayerList={[]} />
       </article>
     </main>
   );
