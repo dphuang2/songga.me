@@ -52,7 +52,11 @@ const LivePlayerList = ({
         <li key={i}>
           {team.players.map((player, i) => (
             <span key={i}>
-              <span>{player.name}</span>
+              {player.playerId === currentPlayerId ? (
+                <strong>{player.name}</strong>
+              ) : (
+                <span>{player.name}</span>
+              )}
               {isGameCreator && player.playerId !== currentPlayerId && (
                 <button
                   onClick={() =>
