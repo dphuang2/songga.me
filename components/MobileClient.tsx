@@ -35,7 +35,7 @@ export async function MobileClient({
           Start Game
         </button>
       )} */}
-      <div className="p-8 shadow-md border rounded-md mb-16">
+      <div className="p-8 shadow-md border rounded-md mb-12">
         <h2>Step 2: Form teams of 2 by joining another player, if you want</h2>
         <h4>
           Players waiting to have fun! <LiveIndicator />
