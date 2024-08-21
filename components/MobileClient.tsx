@@ -39,7 +39,6 @@ export async function MobileClient({
         <h4>
           Players waiting to have fun! <LiveIndicator />
         </h4>
-        <p></p>
         <LivePlayerList
           currentPlayerId={currentPlayerId}
           isGameCreator={isCreator}
