@@ -8,10 +8,12 @@ export async function MobileClient({
   link,
   gameId,
   isGameCreator,
+  currentPlayerId,
 }: {
   link: string;
   gameId: number;
   isGameCreator: boolean;
+  currentPlayerId: number;
 }) {
   const { player, supabase } = await setupUserForGame({ gameId });
   const players = await getTeamsAndPlayersForGame({ gameId });
@@ -31,6 +33,7 @@ export async function MobileClient({
         Players waiting to have fun! <LiveIndicator />
       </h3>
       <LivePlayerList
+        currentPlayerId={currentPlayerId}
         isGameCreator={isGameCreator}
         gameId={gameId}
         initialPlayerList={players}

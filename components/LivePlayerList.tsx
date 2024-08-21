@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 import { joinTeam } from "@/utils/supabase/join-team";
 import { kickPlayerFromGame } from "@/utils/supabase/kick-player-from-game";
+import { leaveTeam } from "@/utils/supabase/leave-team";
 import React, { useEffect, useState } from "react";
 
 export type Players = {
@@ -15,10 +16,12 @@ const LivePlayerList = ({
   initialPlayerList,
   gameId,
   isGameCreator,
+  currentPlayerId,
 }: {
   initialPlayerList: Players;
   gameId: number;
   isGameCreator: boolean;
+  currentPlayerId: number;
 }) => {
   const supabase = createClient();
   const [playerList, setPlayerList] = useState(initialPlayerList);
@@ -50,7 +53,7 @@ const LivePlayerList = ({
           {team.players.map((player, i) => (
             <span key={i}>
               <span>{player.name}</span>
-              {isGameCreator && (
+              {isGameCreator && player.playerId !== currentPlayerId && (
                 <button
                   onClick={() =>
                     kickPlayerFromGame({
@@ -68,13 +71,33 @@ const LivePlayerList = ({
                 : ""}
             </span>
           ))}
-          {" / "}
-          <button
-            onClick={() => joinTeam({ newTeamId: team.teamId, gameId: gameId })}
-            className="text-sm text-blue-500 hover:text-blue-700"
-          >
-            Join Team
-          </button>
+          {team.players.some(
+            (player) => player.playerId === currentPlayerId
+          ) ? (
+            team.players.length === 1 ? null : (
+              <>
+                {" / "}
+                <button
+                  onClick={() => leaveTeam({ gameId })}
+                  className="text-sm text-red-500 hover:text-red-700"
+                >
+                  Leave Team
+                </button>
+              </>
+            )
+          ) : team.players.length === 1 ? (
+            <>
+              {" / "}
+              <button
+                onClick={() =>
+                  joinTeam({ newTeamId: team.teamId, gameId: gameId })
+                }
+                className="text-sm text-blue-500 hover:text-blue-700"
+              >
+                Join Team
+              </button>
+            </>
+          ) : null}
         </li>
       ))}
     </ol>

@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { MobileClient } from "@/components/MobileClient";
 import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 import { isGameCreator } from "@/utils/supabase/is-game-creator";
+import { getUserAndPlayer } from "@/utils/supabase/get-user-and-player";
 
 export default async function Game({ params }: { params: { game: string } }) {
   const supabase = createClient();
@@ -24,12 +25,23 @@ export default async function Game({ params }: { params: { game: string } }) {
   const isMobile = isMobileDevice();
   const gameId = existingGame.data[0].id;
   const isCreator = await isGameCreator({ gameId });
+  const currentPlayerId = (await getUserAndPlayer({ supabase })).player.id;
   return (
     <div>
       {true ? (
-        <Mobile isCreator={isCreator} gameId={gameId} link={link} />
+        <Mobile
+          currentPlayerId={currentPlayerId}
+          isCreator={isCreator}
+          gameId={gameId}
+          link={link}
+        />
       ) : (
-        <Desktop isCreator={isCreator} gameId={gameId} link={link} />
+        <Desktop
+          currentPlayerId={currentPlayerId}
+          isCreator={isCreator}
+          gameId={gameId}
+          link={link}
+        />
       )}
     </div>
   );
@@ -39,15 +51,22 @@ async function Mobile({
   link,
   gameId,
   isCreator,
+  currentPlayerId,
 }: {
   link: string;
   gameId: number;
   isCreator: boolean;
+  currentPlayerId: number;
 }) {
   return (
     <main className="container mx-auto py-16 flex flex-col justify-center items-center px-4">
       <article className="prose">
-        <MobileClient isGameCreator={isCreator} gameId={gameId} link={link} />
+        <MobileClient
+          currentPlayerId={currentPlayerId}
+          isGameCreator={isCreator}
+          gameId={gameId}
+          link={link}
+        />
         <h3>Want to invite others?</h3>
         <p>Share this QR code for anyone else who wants to play</p>
         <QRCodeGenerator url={link} />
@@ -60,10 +79,12 @@ async function Desktop({
   link,
   gameId,
   isCreator,
+  currentPlayerId,
 }: {
   link: string;
   gameId: number;
   isCreator: boolean;
+  currentPlayerId: number;
 }) {
   const players = await getTeamsAndPlayersForGame({ gameId });
   return (
@@ -97,6 +118,7 @@ async function Desktop({
           isGameCreator={isCreator}
           gameId={gameId}
           initialPlayerList={players}
+          currentPlayerId={currentPlayerId}
         />
       </article>
     </main>
