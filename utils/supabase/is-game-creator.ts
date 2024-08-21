@@ -15,7 +15,6 @@ export async function isGameCreator({
     .select("*", { count: "exact", head: true })
     .eq("creator", user.id)
     .eq("id", gameId);
-  console.log("isGameCreator", error);
   if (error) throw error;
   if (count === null) throw Error("Did not get count of games");
   return count > 0;

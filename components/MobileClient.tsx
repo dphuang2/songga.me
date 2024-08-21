@@ -1,4 +1,6 @@
-import LivePlayerList, { Players } from "./LivePlayerList";
+"use client";
+
+import LivePlayerList from "./LivePlayerList";
 import { LiveIndicator } from "./LiveIndicator";
 import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
