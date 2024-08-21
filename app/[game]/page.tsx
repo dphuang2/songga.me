@@ -28,7 +28,7 @@ export default async function Game({ params }: { params: { game: string } }) {
   const currentPlayerId = (await getUserAndPlayer({ supabase })).player.id;
   return (
     <div>
-      {true ? (
+      {true && !isCreator ? (
         <Mobile
           currentPlayerId={currentPlayerId}
           isCreator={isCreator}
@@ -67,9 +67,11 @@ async function Mobile({
           gameId={gameId}
           link={link}
         />
-        <h3>Want to invite others?</h3>
-        <p>Share this QR code for anyone else who wants to play</p>
-        <QRCodeGenerator url={link} />
+        <div className="p-8 shadow-xl border rounded-md">
+          <h2>Step 3: Invite others!</h2>
+          <p>Share this QR code for anyone else who wants to play</p>
+          <QRCodeGenerator url={link} />
+        </div>
       </article>
     </main>
   );
@@ -90,7 +92,7 @@ async function Desktop({
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <article className="prose">
-        <h1 className="text-gray-400">Waiting to start the game...</h1>
+        <h1 className="text-gray-400">You are the host</h1>
         <h2>How to start the game</h2>
         <ol>
           <li>
@@ -98,17 +100,15 @@ async function Desktop({
             <span className="cursor-pointer text-blue-500 hover:text-blue-700">
               {link}
             </span>
-            . You can use the following QR code if its easier.
+            . You can also share the following QR code.
           </li>
           <QRCodeGenerator url={link} />
-          <li>Enter your name</li>
-          <li>Join others to form teams of 2</li>
           <li>
             Make sure your Spotify is playing on a device everyone can hear
           </li>
           <li>When everyone is ready, click "Start Game" button below. </li>
         </ol>
-        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-3">
+        <button className="bg-blue-500 w-full hover:bg-blue-700 text-lg text-white font-bold py-2 px-4 rounded mb-3">
           Start Game
         </button>
         <h2>
