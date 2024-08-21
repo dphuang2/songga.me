@@ -15,18 +15,21 @@ export type Database = {
           creator: string
           id: number
           slug: string
+          state: Json | null
         }
         Insert: {
           created_at?: string
           creator: string
           id?: number
           slug?: string
+          state?: Json | null
         }
         Update: {
           created_at?: string
           creator?: string
           id?: number
           slug?: string
+          state?: Json | null
         }
         Relationships: [
           {

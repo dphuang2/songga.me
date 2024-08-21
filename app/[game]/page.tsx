@@ -1,5 +1,5 @@
 import { LiveIndicator } from "@/components/LiveIndicator";
-import LivePlayerList from "@/components/LivePlayerList";
+import LivePlayerList, { Players } from "@/components/LivePlayerList";
 import QRCodeGenerator from "@/components/QRCode";
 import { isMobileDevice } from "@/utils/is-mobile-device";
 import { createClient } from "@/utils/supabase/server";
@@ -8,6 +8,8 @@ import { MobileClient } from "@/components/MobileClient";
 import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 import { isGameCreator } from "@/utils/supabase/is-game-creator";
 import { getUserAndPlayer } from "@/utils/supabase/get-user-and-player";
+import { StartGameButton } from "@/components/StartGameButton";
+import { setupUserForGame } from "@/utils/supabase/setup-user-for-game";
 
 export default async function Game({ params }: { params: { game: string } }) {
   const supabase = createClient();
@@ -26,10 +28,12 @@ export default async function Game({ params }: { params: { game: string } }) {
   const gameId = existingGame.data[0].id;
   const isCreator = await isGameCreator({ gameId });
   const currentPlayerId = (await getUserAndPlayer({ supabase })).player.id;
+  const players = await getTeamsAndPlayersForGame({ gameId });
   return (
     <div>
       {true && !isCreator ? (
         <Mobile
+          initialPlayerList={players}
           currentPlayerId={currentPlayerId}
           isCreator={isCreator}
           gameId={gameId}
@@ -37,6 +41,7 @@ export default async function Game({ params }: { params: { game: string } }) {
         />
       ) : (
         <Desktop
+          initialPlayerList={players}
           currentPlayerId={currentPlayerId}
           isCreator={isCreator}
           gameId={gameId}
@@ -47,25 +52,32 @@ export default async function Game({ params }: { params: { game: string } }) {
   );
 }
 
+export type GameProps = {
+  link: string;
+  gameId: number;
+  isCreator: boolean;
+  currentPlayerId: number;
+  initialPlayerList: Players;
+};
+
 async function Mobile({
   link,
   gameId,
   isCreator,
   currentPlayerId,
-}: {
-  link: string;
-  gameId: number;
-  isCreator: boolean;
-  currentPlayerId: number;
-}) {
+  initialPlayerList,
+}: GameProps) {
+  const { player } = await setupUserForGame({ gameId });
   return (
     <main className="container mx-auto py-16 flex flex-col justify-center items-center px-4">
       <article className="prose">
         <MobileClient
           currentPlayerId={currentPlayerId}
-          isGameCreator={isCreator}
+          player={player}
+          isCreator={isCreator}
           gameId={gameId}
           link={link}
+          initialPlayerList={initialPlayerList}
         />
         <div className="p-8 shadow-xl border rounded-md">
           <h2>Step 3: Invite others!</h2>
@@ -82,13 +94,8 @@ async function Desktop({
   gameId,
   isCreator,
   currentPlayerId,
-}: {
-  link: string;
-  gameId: number;
-  isCreator: boolean;
-  currentPlayerId: number;
-}) {
-  const players = await getTeamsAndPlayersForGame({ gameId });
+  initialPlayerList,
+}: GameProps) {
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <article className="prose">
@@ -108,16 +115,14 @@ async function Desktop({
           </li>
           <li>When everyone is ready, click "Start Game" button below. </li>
         </ol>
-        <button className="bg-blue-500 w-full hover:bg-blue-700 text-lg text-white font-bold py-2 px-4 rounded mb-3">
-          Start Game
-        </button>
-        <h2>
+        <StartGameButton gameId={gameId} />
+        <h3>
           Cool people waiting to play <LiveIndicator />
-        </h2>
+        </h3>
         <LivePlayerList
           isGameCreator={isCreator}
           gameId={gameId}
-          initialPlayerList={players}
+          initialPlayerList={initialPlayerList}
           currentPlayerId={currentPlayerId}
         />
       </article>

@@ -1,22 +1,19 @@
-import LivePlayerList from "./LivePlayerList";
+import LivePlayerList, { Players } from "./LivePlayerList";
 import { LiveIndicator } from "./LiveIndicator";
-import { setupUserForGame } from "@/utils/supabase/setup-user-for-game";
-import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 import { PlayerNameInput } from "./PlayerNameInput";
+import { GameProps } from "@/app/[game]/page";
+import { Tables } from "@/utils/supabase/database.types";
 
 export async function MobileClient({
   link,
   gameId,
-  isGameCreator,
+  isCreator,
   currentPlayerId,
-}: {
-  link: string;
-  gameId: number;
-  isGameCreator: boolean;
-  currentPlayerId: number;
+  initialPlayerList,
+  player,
+}: GameProps & {
+  player: Tables<"player">;
 }) {
-  const { player, supabase } = await setupUserForGame({ gameId });
-  const players = await getTeamsAndPlayersForGame({ gameId });
   return (
     <>
       <p className="text-sm text-gray-400">
@@ -43,9 +40,9 @@ export async function MobileClient({
         <p></p>
         <LivePlayerList
           currentPlayerId={currentPlayerId}
-          isGameCreator={isGameCreator}
+          isGameCreator={isCreator}
           gameId={gameId}
-          initialPlayerList={players}
+          initialPlayerList={initialPlayerList}
         />
       </div>
     </>

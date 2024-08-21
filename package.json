@@ -22,7 +22,8 @@
     "tailwindcss": "3.4.1",
     "typescript": "5.3.3",
     "ua-parser-js": "^1.0.38",
-    "use-debounce": "^10.0.3"
+    "use-debounce": "^10.0.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@supabase/auth-js": "^2.64.4",
