@@ -10,6 +10,7 @@ export function DesktopClient({
   isCreator,
   currentPlayerId,
   initialPlayerList,
+  isPlayerOnAnyTeam,
 }: GameProps) {
   return (
     <>
@@ -18,6 +19,7 @@ export function DesktopClient({
         Cool people waiting to play <LiveIndicator />
       </h3>
       <LivePlayerList
+        isPlayerOnAnyTeam={isPlayerOnAnyTeam}
         isGameCreator={isCreator}
         gameId={gameId}
         initialPlayerList={initialPlayerList}

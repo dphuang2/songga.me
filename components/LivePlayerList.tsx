@@ -17,11 +17,13 @@ const LivePlayerList = ({
   gameId,
   isGameCreator,
   currentPlayerId,
+  isPlayerOnAnyTeam,
 }: {
   initialPlayerList: Players;
   gameId: number;
   isGameCreator: boolean;
   currentPlayerId: number;
+  isPlayerOnAnyTeam: boolean;
 }) => {
   const supabase = createClient();
   const [playerList, setPlayerList] = useState(initialPlayerList);
@@ -89,7 +91,7 @@ const LivePlayerList = ({
                 </button>
               </>
             )
-          ) : team.players.length === 1 ? (
+          ) : team.players.length === 1 && isPlayerOnAnyTeam ? (
             <>
               {" / "}
               <button

@@ -16,6 +16,7 @@ export async function MobileClient({
   initialPlayerList,
   player,
   gameSlug,
+  isPlayerOnAnyTeam,
 }: GameProps & {
   player: Tables<"player">;
 }) {
@@ -49,6 +50,7 @@ export async function MobileClient({
           Players waiting to have fun! <LiveIndicator />
         </h4>
         <LivePlayerList
+          isPlayerOnAnyTeam={isPlayerOnAnyTeam}
           currentPlayerId={currentPlayerId}
           isGameCreator={isCreator}
           gameId={gameId}

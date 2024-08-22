@@ -1,14 +1,15 @@
-import { SupabaseServerClient } from "./server";
+"use server";
+
+import { createClient } from "./server";
 
 export async function isPlayerOnAnyTeam({
   gameId,
-  supabase,
   playerId,
 }: {
   gameId: number;
   playerId: number;
-  supabase: SupabaseServerClient;
 }): Promise<boolean> {
+  const supabase = createClient();
   const teamsWithGameQuery = supabase
     .from("team")
     // Using "!inner" allows us to filter on the referenced table's colun value

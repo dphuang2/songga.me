@@ -9,6 +9,7 @@ import { isGameCreator } from "@/utils/supabase/is-game-creator";
 import { getUserAndPlayer } from "@/utils/supabase/get-user-and-player";
 import { setupUserForGame } from "@/utils/supabase/setup-user-for-game";
 import { DesktopClient } from "@/components/DesktopClient";
+import { isPlayerOnAnyTeam } from "@/utils/supabase/is-player-on-any-team";
 
 export default async function Game({ params }: { params: { game: string } }) {
   const supabase = createClient();
@@ -28,6 +29,10 @@ export default async function Game({ params }: { params: { game: string } }) {
   const isCreator = await isGameCreator({ gameId });
   const currentPlayerId = (await getUserAndPlayer({ supabase })).player.id;
   const players = await getTeamsAndPlayersForGame({ gameId });
+  const isOnTeam = await isPlayerOnAnyTeam({
+    gameId,
+    playerId: currentPlayerId,
+  });
   return (
     <div>
       {true && !isCreator ? (
@@ -38,6 +43,7 @@ export default async function Game({ params }: { params: { game: string } }) {
           gameId={gameId}
           link={link}
           gameSlug={params.game}
+          isPlayerOnAnyTeam={isOnTeam}
         />
       ) : (
         <Desktop
@@ -47,6 +53,7 @@ export default async function Game({ params }: { params: { game: string } }) {
           isCreator={isCreator}
           gameId={gameId}
           link={link}
+          isPlayerOnAnyTeam={isOnTeam}
         />
       )}
     </div>
@@ -60,6 +67,7 @@ export type GameProps = {
   isCreator: boolean;
   currentPlayerId: number;
   initialPlayerList: Players;
+  isPlayerOnAnyTeam: boolean;
 };
 
 async function Mobile({
@@ -69,12 +77,14 @@ async function Mobile({
   currentPlayerId,
   initialPlayerList,
   gameSlug,
+  isPlayerOnAnyTeam,
 }: GameProps) {
   const { player } = await setupUserForGame({ gameId });
   return (
     <main className="container mx-auto py-16 flex flex-col justify-center items-center px-4">
       <article className="prose">
         <MobileClient
+          isPlayerOnAnyTeam={isPlayerOnAnyTeam}
           gameSlug={gameSlug}
           currentPlayerId={currentPlayerId}
           player={player}
