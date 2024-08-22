@@ -1,5 +1,4 @@
 import { Players } from "@/components/LivePlayerList";
-import QRCodeGenerator from "@/components/QRCode";
 import { isMobileDevice } from "@/utils/is-mobile-device";
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
@@ -46,7 +45,7 @@ export default async function Game({ params }: { params: { game: string } }) {
           isPlayerOnAnyTeam={isOnTeam}
         />
       ) : (
-        <Desktop
+        <DesktopClient
           gameSlug={params.game}
           initialPlayerList={players}
           currentPlayerId={currentPlayerId}
@@ -81,50 +80,15 @@ async function Mobile({
 }: GameProps) {
   const { player } = await setupUserForGame({ gameId });
   return (
-    <main className="container mx-auto py-16 flex flex-col justify-center items-center px-4">
-      <article className="prose">
-        <MobileClient
-          isPlayerOnAnyTeam={isPlayerOnAnyTeam}
-          gameSlug={gameSlug}
-          currentPlayerId={currentPlayerId}
-          player={player}
-          isCreator={isCreator}
-          gameId={gameId}
-          link={link}
-          initialPlayerList={initialPlayerList}
-        />
-        <div className="p-8 shadow-xl border rounded-md">
-          <h2>Step 3: Invite others!</h2>
-          <p>Share this QR code for anyone else who wants to play</p>
-          <QRCodeGenerator url={link} />
-        </div>
-      </article>
-    </main>
-  );
-}
-
-async function Desktop(props: GameProps) {
-  return (
-    <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
-      <article className="prose">
-        <h1 className="text-gray-400">You are the host</h1>
-        <h2>How to start the game</h2>
-        <ol>
-          <li>
-            All players open the game on their phone:{" "}
-            <span className="cursor-pointer text-blue-500 hover:text-blue-700">
-              {props.link}
-            </span>
-            . You can also share the following QR code.
-          </li>
-          <QRCodeGenerator url={props.link} />
-          <li>
-            Make sure your Spotify is playing on a device everyone can hear
-          </li>
-          <li>When everyone is ready, click "Start Game" button below. </li>
-        </ol>
-        <DesktopClient {...props} />
-      </article>
-    </main>
+    <MobileClient
+      isPlayerOnAnyTeam={isPlayerOnAnyTeam}
+      gameSlug={gameSlug}
+      currentPlayerId={currentPlayerId}
+      player={player}
+      isCreator={isCreator}
+      gameId={gameId}
+      link={link}
+      initialPlayerList={initialPlayerList}
+    />
   );
 }
