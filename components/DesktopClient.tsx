@@ -40,14 +40,32 @@ function Game(props: GameProps & { gameState: GameState }) {
 
 function Scoreboard() {
   const teams = [
-    { name: "A", score: 42, isTyping: true, players: ["Alice"] },
-    { name: "B", score: 46, isGuessed: true, players: ["Bob", "Bill"] },
-    { name: "C", score: 38, isPicker: true, players: ["Charlie"] },
-    { name: "D", score: 51, isGuessed: true, players: ["David", "Diana"] },
-    { name: "E", score: 40, isTyping: true, players: ["Eve"] },
-    { name: "F", score: 48, players: ["Frank", "Fiona"] },
-    { name: "G", score: 35, isGuessed: true, players: ["George"] },
-    { name: "H", score: 53, players: ["Hannah", "Harry"] },
+    {
+      name: "A",
+      score: 42,
+      isTyping: true,
+      players: ["Alice"],
+      guessOrder: null,
+    },
+    { name: "B", score: 46, guessOrder: 1, players: ["Bob", "Bill"] },
+    {
+      name: "C",
+      score: 38,
+      isPicker: true,
+      players: ["Charlie"],
+      guessOrder: null,
+    },
+    { name: "D", score: 51, guessOrder: 2, players: ["David", "Diana"] },
+    {
+      name: "E",
+      score: 40,
+      isTyping: true,
+      players: ["Eve"],
+      guessOrder: null,
+    },
+    { name: "F", score: 48, players: ["Frank", "Fiona"], guessOrder: null },
+    { name: "G", score: 35, guessOrder: 3, players: ["George"] },
+    { name: "H", score: 53, players: ["Hannah", "Harry"], outOfGuesses: true },
   ];
 
   // Sort teams by score in descending order
@@ -87,10 +105,11 @@ function Scoreboard() {
               score={team.score}
               isTyping={team.isTyping}
               isPicker={team.isPicker}
-              isGuessed={team.isGuessed}
+              guessOrder={team.guessOrder}
               players={team.players}
               rank={index + 1}
               isLeader={index === 0}
+              outOfGuesses={team.outOfGuesses}
             />
           ))}
         </div>
@@ -105,19 +124,21 @@ function TeamScore({
   score,
   isTyping,
   isPicker,
-  isGuessed,
+  guessOrder,
   players,
   rank,
   isLeader,
+  outOfGuesses,
 }: {
   name: string;
   score: number;
   isTyping?: boolean;
   isPicker?: boolean;
-  isGuessed?: boolean;
+  guessOrder?: number | null;
   players: string[];
   rank: number;
   isLeader: boolean;
+  outOfGuesses?: boolean;
 }) {
   const bgColors = [
     "bg-pink-300",
@@ -143,17 +164,35 @@ function TeamScore({
 
   const rankInfo = rankSymbol(rank);
 
+  const getGuessOrderLabel = (order: number) => {
+    switch (order) {
+      case 1:
+        return "1st";
+      case 2:
+        return "2nd";
+      case 3:
+        return "3rd";
+      default:
+        return `${order}th`;
+    }
+  };
+
   return (
     <div
-      className={`${bgColor} border-4 border-black p-4 rounded-xl ${rotation} relative transition-all duration-300 ${
-        isTyping ? "scale-105 shadow-lg" : ""
-      } ${isGuessed ? "opacity-60" : ""} ${
-        isLeader ? "shadow-[0_0_20px_5px_rgba(255,215,0,0.7)]" : ""
-      } ${
-        isPicker
-          ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-yellow-400"
-          : ""
-      }`}
+      className={`${bgColor} border-4 border-black p-4 rounded-xl ${rotation} relative transition-all duration-300
+        ${isTyping ? "scale-105 shadow-lg" : ""}
+        ${
+          guessOrder
+            ? "scale-105 shadow-lg ring-4 ring-emerald-500 ring-offset-2"
+            : ""
+        }
+        ${isLeader ? "shadow-[0_0_20px_5px_rgba(255,215,0,0.7)]" : ""}
+        ${
+          isPicker
+            ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-yellow-400"
+            : ""
+        }
+        ${outOfGuesses ? "opacity-40" : ""}`}
     >
       {isPicker && (
         <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-3 py-1 rounded-full border-4 border-black font-bold text-sm transform rotate-12 animate-bounce shadow-lg">
@@ -186,9 +225,16 @@ function TeamScore({
           <span className="text-sm font-bold">Typing</span>
         </div>
       )}
-      {isGuessed && (
-        <div className="absolute -top-2 -right-2 bg-green-400 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
-          <span className="text-sm font-bold">Guessed</span>
+      {guessOrder && (
+        <div className="absolute -top-8 -right-4 bg-green-400 rounded-full p-2 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
+          <span className="text-sm font-bold">
+            Guessed {getGuessOrderLabel(guessOrder)}!
+          </span>
+        </div>
+      )}
+      {outOfGuesses && (
+        <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
+          <span className="text-sm font-bold text-white">Out of Guesses</span>
         </div>
       )}
       {isLeader && (
