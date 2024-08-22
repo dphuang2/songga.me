@@ -5,6 +5,8 @@ import { LiveIndicator } from "./LiveIndicator";
 import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
 import { Tables } from "@/utils/supabase/database.types";
+import { useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 export async function MobileClient({
   link,
@@ -13,9 +15,16 @@ export async function MobileClient({
   currentPlayerId,
   initialPlayerList,
   player,
+  gameSlug,
 }: GameProps & {
   player: Tables<"player">;
 }) {
+  useEffect(() => {
+    const supabase = createClient();
+    const gameRoom = supabase.channel(gameSlug);
+
+    return () => {};
+  }, []);
   return (
     <>
       <p className="text-sm text-gray-400">

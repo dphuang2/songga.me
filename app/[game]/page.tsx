@@ -1,5 +1,4 @@
-import { LiveIndicator } from "@/components/LiveIndicator";
-import LivePlayerList, { Players } from "@/components/LivePlayerList";
+import { Players } from "@/components/LivePlayerList";
 import QRCodeGenerator from "@/components/QRCode";
 import { isMobileDevice } from "@/utils/is-mobile-device";
 import { createClient } from "@/utils/supabase/server";
@@ -8,8 +7,8 @@ import { MobileClient } from "@/components/MobileClient";
 import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 import { isGameCreator } from "@/utils/supabase/is-game-creator";
 import { getUserAndPlayer } from "@/utils/supabase/get-user-and-player";
-import { StartGameButton } from "@/components/StartGameButton";
 import { setupUserForGame } from "@/utils/supabase/setup-user-for-game";
+import { DesktopClient } from "@/components/DesktopClient";
 
 export default async function Game({ params }: { params: { game: string } }) {
   const supabase = createClient();
@@ -38,9 +37,11 @@ export default async function Game({ params }: { params: { game: string } }) {
           isCreator={isCreator}
           gameId={gameId}
           link={link}
+          gameSlug={params.game}
         />
       ) : (
         <Desktop
+          gameSlug={params.game}
           initialPlayerList={players}
           currentPlayerId={currentPlayerId}
           isCreator={isCreator}
@@ -55,6 +56,7 @@ export default async function Game({ params }: { params: { game: string } }) {
 export type GameProps = {
   link: string;
   gameId: number;
+  gameSlug: string;
   isCreator: boolean;
   currentPlayerId: number;
   initialPlayerList: Players;
@@ -66,12 +68,14 @@ async function Mobile({
   isCreator,
   currentPlayerId,
   initialPlayerList,
+  gameSlug,
 }: GameProps) {
   const { player } = await setupUserForGame({ gameId });
   return (
     <main className="container mx-auto py-16 flex flex-col justify-center items-center px-4">
       <article className="prose">
         <MobileClient
+          gameSlug={gameSlug}
           currentPlayerId={currentPlayerId}
           player={player}
           isCreator={isCreator}
@@ -89,13 +93,7 @@ async function Mobile({
   );
 }
 
-async function Desktop({
-  link,
-  gameId,
-  isCreator,
-  currentPlayerId,
-  initialPlayerList,
-}: GameProps) {
+async function Desktop(props: GameProps) {
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <article className="prose">
@@ -105,26 +103,17 @@ async function Desktop({
           <li>
             All players open the game on their phone:{" "}
             <span className="cursor-pointer text-blue-500 hover:text-blue-700">
-              {link}
+              {props.link}
             </span>
             . You can also share the following QR code.
           </li>
-          <QRCodeGenerator url={link} />
+          <QRCodeGenerator url={props.link} />
           <li>
             Make sure your Spotify is playing on a device everyone can hear
           </li>
           <li>When everyone is ready, click "Start Game" button below. </li>
         </ol>
-        <StartGameButton gameId={gameId} />
-        <h3>
-          Cool people waiting to play <LiveIndicator />
-        </h3>
-        <LivePlayerList
-          isGameCreator={isCreator}
-          gameId={gameId}
-          initialPlayerList={initialPlayerList}
-          currentPlayerId={currentPlayerId}
-        />
+        <DesktopClient {...props} />
       </article>
     </main>
   );
