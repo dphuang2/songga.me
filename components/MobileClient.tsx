@@ -31,6 +31,7 @@ export function MobileClient({
       config: { broadcast: { self: true } },
     });
     gameRoom.current.on("broadcast", { event: "game" }, ({ payload }) => {
+      console.log(payload);
       setGameState(gameStateSchema.parse(payload));
     });
     gameRoom.current.subscribe();
