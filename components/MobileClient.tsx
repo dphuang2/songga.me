@@ -58,7 +58,7 @@ export function MobileClient({
 }
 
 function Game() {
-  return true ? <Picker /> : <Guesser />;
+  return true ? <Picker /> : <Guesser hasPicked={false} />;
 }
 
 function Picker() {
@@ -139,7 +139,7 @@ function Picker() {
   );
 }
 
-function Guesser() {
+function Guesser({ hasPicked }: { hasPicked: boolean }) {
   const [guessesLeft, setGuessesLeft] = useState({ artist: 1, song: 1 });
   const [artistSearch, setArtistSearch] = useState("");
   const [songSearch, setSongSearch] = useState("");
@@ -193,6 +193,21 @@ function Guesser() {
       setArtistResults([]);
     }
   };
+
+  if (!hasPicked) {
+    return (
+      <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-16 font-sans fixed inset-0 overflow-y-auto">
+        <div className="bg-white border-8 border-black rounded-3xl p-4 sm:p-6 w-full max-w-md mx-auto transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px] mt-8 sm:mt-12 md:mt-16 lg:mt-20">
+          <h2 className="text-2xl sm:text-3xl font-black uppercase bg-purple-300 px-3 py-1 sm:px-4 sm:py-2 rounded-xl border-4 border-black transform -rotate-2 mb-4 sm:mb-6">
+            Waiting for Song
+          </h2>
+          <p className="text-xl font-bold text-center">
+            The picker hasn't chosen a song yet. Please wait...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-16 font-sans fixed inset-0 overflow-y-auto">
