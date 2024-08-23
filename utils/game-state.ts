@@ -5,17 +5,16 @@ import { createClient } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
 
 export const gameStateSchema = z.object({
-  picker: z.number(),
-  started: z.boolean(),
-
-  /**
-   * Team ID -> Score
-   */
-  score: z.record(z.number(), z.number()),
-
   teams: z.array(
     z.object({
       teamId: z.number(),
+      score: z.number(),
+      picker: z.boolean(),
+      guessOrder: z
+        .union([z.literal(1), z.literal(2), z.literal(3)])
+        .nullable(),
+      isTyping: z.boolean(),
+      outOfGuesses: z.boolean(),
       players: z.array(
         z.object({
           name: z.string(),
@@ -50,11 +49,30 @@ export class GameStore {
       throw Error("Can't start game without connection to game channel");
     getTeamsAndPlayersForGame({ gameId }).then((teams) => {
       const state: GameState = {
-        picker: 2,
-        started: true,
-        score: {},
-        teams,
+        teams: teams.map((team) => {
+          return {
+            teamId: team.teamId,
+            score: 0,
+            picker: false,
+            guessOrder: null,
+            isTyping: false,
+            outOfGuesses: false,
+            players: team.players.map((player) => {
+              return {
+                name: player.name,
+                playerId: player.playerId,
+              };
+            }),
+          };
+        }),
       };
+
+      // Randomly select a team to be the picker
+      const randomIndex = Math.floor(Math.random() * state.teams.length);
+      state.teams[randomIndex].picker = true;
+
+      // Set the game state
+      this.setGameState(state);
       this.gameRoom?.send({
         type: "broadcast",
         event: "game",

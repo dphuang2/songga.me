@@ -4,8 +4,6 @@ import { GameProps } from "@/app/[game]/page";
 import { LiveIndicator } from "./LiveIndicator";
 import LivePlayerList from "./LivePlayerList";
 import { useEffect, useState, createContext, useContext } from "react";
-import { GameState } from "@/utils/game-state";
-import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 import { MusicIcon } from "./MusicIcon";
 import { observer } from "mobx-react-lite";
 import { FunFact } from "./FunFact";
