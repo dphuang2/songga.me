@@ -105,6 +105,8 @@ const Picker = observer(() => {
     setSearch("");
   };
 
+  const gameStore = useGameStore();
+
   return (
     <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-16 font-sans fixed inset-0 overflow-y-auto">
       <div className="bg-white border-8 border-black rounded-3xl p-4 sm:p-6 w-full max-w-md mx-auto transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px] mt-8 sm:mt-12 md:mt-16 lg:mt-20">
@@ -154,7 +156,10 @@ const Picker = observer(() => {
           className={`w-full bg-blue-500 hover:bg-blue-700 text-white text-xl font-bold py-3 px-6 rounded-xl border-4 border-black transition-colors ${
             !selectedSong ? "opacity-50 cursor-not-allowed" : ""
           }`}
-          disabled={!selectedSong}
+          onClick={() => {
+            gameStore.startRound({ song: selectedSong });
+          }}
+          disabled={!selectedSong || !gameStore.connectedToGameRoom()}
         >
           Start Round
         </button>

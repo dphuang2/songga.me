@@ -83,8 +83,14 @@ const Scoreboard = observer(({}: GameProps) => {
               1
             </div>
           </div>
-          <div className="bg-blue-400 border-4 border-black px-4 sm:px-6 py-2 sm:py-3 text-xl sm:text-2xl font-black uppercase rounded-xl inline-block transform -rotate-1">
-            Guessing
+          <div className="bg-blue-400 border-4 border-black px-4 sm:px-6 py-2 sm:py-3 text-xl sm:text-2xl font-black uppercase rounded-xl inline-block transform -rotate-1 relative">
+            {gameStore.currentScoreboardMessage()}
+            {gameStore.connectedToGameRoom() &&
+              gameStore.isCurrentRoundActive() && (
+                <div className="absolute -top-8 -right-5 bg-yellow-300 border-4 border-black rounded-full p-1 transform rotate-3 shadow-[4px_4px_0_0_rgba(0,0,0,1)] animate-shake">
+                  <span className="text-3xl">🗣️</span>
+                </div>
+              )}
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">

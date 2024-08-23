@@ -5,6 +5,7 @@ import { createClient } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
 
 export const gameStateSchema = z.object({
+  selectedSong: z.string().nullable(),
   teams: z.array(
     z.object({
       teamId: z.number(),
@@ -119,6 +120,7 @@ export class GameStore {
         "bg-sky-300",
       ] as const;
       const state: GameState = {
+        selectedSong: null,
         teams: teams.map((team) => {
           return {
             teamId: team.teamId,
@@ -150,6 +152,29 @@ export class GameStore {
         payload: state,
       });
     });
+  }
+
+  connectedToGameRoom(): boolean {
+    return this.gameRoom !== null;
+  }
+
+  startRound({ song }: { song: string }) {
+    if (this.gameState === null) throw new Error("Game state is null");
+    this.gameState.selectedSong = song;
+    this.gameRoom?.send({
+      type: "broadcast",
+      event: "game",
+      payload: this.gameState,
+    });
+  }
+
+  isCurrentRoundActive(): boolean {
+    return this.gameState?.selectedSong !== null;
+  }
+
+  currentScoreboardMessage(): string {
+    if (!this.isCurrentRoundActive()) return "Picker is choosing a song...";
+    return "Players, start guessing!";
   }
 
   initializeGameRoom() {
