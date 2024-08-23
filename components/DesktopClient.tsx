@@ -54,98 +54,16 @@ const DesktopClientInner = observer((props: GameProps) => {
   }, [props.gameSlug, gameStore]);
 
   return gameStore.gameState !== null ? (
-    <Game {...props} />
+    <Scoreboard {...props} />
   ) : (
     <Lobby {...props} />
   );
 });
 
-function Game(props: GameProps) {
-  return <Scoreboard />;
-}
-
-const Scoreboard = observer(() => {
-  const bgColors = [
-    "bg-red-300",
-    "bg-orange-300",
-    "bg-yellow-300",
-    "bg-green-300",
-    "bg-teal-300",
-    "bg-blue-300",
-    "bg-indigo-300",
-    "bg-purple-300",
-    "bg-pink-300",
-    "bg-rose-300",
-    "bg-cyan-300",
-    "bg-emerald-300",
-    "bg-lime-300",
-    "bg-amber-300",
-    "bg-fuchsia-300",
-    "bg-violet-300",
-    "bg-sky-300",
-  ] as const;
-
-  const teams = [
-    {
-      name: "A",
-      score: 42,
-      isTyping: true,
-      players: ["Alice"],
-      guessOrder: null,
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    },
-    {
-      name: "B",
-      score: 46,
-      guessOrder: 1,
-      players: ["Bob", "Bill"],
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    },
-    {
-      name: "Solo C-Note",
-      score: 38,
-      isPicker: true,
-      players: ["Charlie"],
-      guessOrder: null,
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    },
-    {
-      name: "Dazzling D&D",
-      score: 51,
-      guessOrder: 2,
-      players: ["David"],
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    },
-    {
-      name: "E",
-      score: 40,
-      isTyping: true,
-      players: ["Eve"],
-      guessOrder: null,
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    },
-    {
-      name: "F",
-      score: 48,
-      players: ["Frank", "Fiona"],
-      guessOrder: null,
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    },
-    {
-      name: "G",
-      score: 35,
-      guessOrder: 3,
-      players: ["George"],
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    },
-    {
-      name: "H",
-      score: 53,
-      players: ["Hannah", "Harry"],
-      outOfGuesses: true,
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    },
-  ];
+const Scoreboard = observer(({}: GameProps) => {
+  const gameStore = useGameStore();
+  if (gameStore.gameState === null) return null;
+  const teams = gameStore.gameState.teams;
 
   // Sort teams by score in descending order
   const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
@@ -173,16 +91,16 @@ const Scoreboard = observer(() => {
           {sortedTeams.map((team, index) => (
             <TeamScore
               key={index}
-              name={team.name}
               score={team.score}
               isTyping={team.isTyping}
               bgColor={team.bgColor}
-              isPicker={team.isPicker}
+              isPicker={team.picker}
               guessOrder={team.guessOrder}
-              players={team.players}
+              players={team.players.map((player) => player.name)}
               rank={index + 1}
-              isLeader={index === 0}
+              isLeader={index === 0 && !gameStore.allScoresAreSame()}
               outOfGuesses={team.outOfGuesses}
+              allScoresAreSame={gameStore.allScoresAreSame()}
             />
           ))}
         </div>
@@ -194,7 +112,6 @@ const Scoreboard = observer(() => {
 
 const TeamScore = observer(
   ({
-    name,
     score,
     isTyping,
     isPicker,
@@ -204,8 +121,8 @@ const TeamScore = observer(
     isLeader,
     outOfGuesses,
     bgColor,
+    allScoresAreSame,
   }: {
-    name: string;
     score: number;
     isTyping?: boolean;
     isPicker?: boolean;
@@ -215,10 +132,12 @@ const TeamScore = observer(
     isLeader: boolean;
     outOfGuesses?: boolean;
     bgColor: string;
+    allScoresAreSame: boolean;
   }) => {
     const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
 
     const rankSymbol = (rank: number) => {
+      if (allScoresAreSame) return null;
       switch (rank) {
         case 1:
           return { emoji: "🥇", bg: "bg-yellow-500" };

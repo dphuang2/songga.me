@@ -65,6 +65,13 @@ export class GameStore {
     this.initializeGameRoom();
   }
 
+  allScoresAreSame(): boolean {
+    if (!this.gameState || this.gameState.teams.length === 0) return true;
+
+    const firstScore = this.gameState.teams[0].score;
+    return this.gameState.teams.every((team) => team.score === firstScore);
+  }
+
   setGameState(state: GameState) {
     this.gameState = state;
   }
