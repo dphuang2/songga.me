@@ -3,7 +3,7 @@
 import { GameProps } from "@/app/[game]/page";
 import { LiveIndicator } from "./LiveIndicator";
 import LivePlayerList from "./LivePlayerList";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { GameState, gameStateSchema } from "@/utils/game-state";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -46,28 +46,55 @@ class GameStore {
   }
 }
 
-const gameStore = new GameStore();
+const GameStoreContext = createContext<GameStore | null>(null);
+
+const GameStoreProvider = ({ children }: { children: React.ReactNode }) => {
+  const [gameStore] = useState(() => new GameStore());
+  return (
+    <GameStoreContext.Provider value={gameStore}>
+      {children}
+    </GameStoreContext.Provider>
+  );
+};
+
+const useGameStore = () => {
+  const store = useContext(GameStoreContext);
+  if (!store) {
+    throw new Error("useGameStore must be used within a GameStoreProvider");
+  }
+  return store;
+};
 
 export const DesktopClient = observer((props: GameProps) => {
+  return (
+    <GameStoreProvider>
+      <DesktopClientInner {...props} />
+    </GameStoreProvider>
+  );
+});
+
+const DesktopClientInner = observer((props: GameProps) => {
+  const gameStore = useGameStore();
+
   useEffect(() => {
     gameStore.initializeGameRoom(props.gameSlug);
     return () => {
       gameStore.cleanup();
     };
-  }, [props.gameSlug]);
+  }, [props.gameSlug, gameStore]);
 
   return gameStore.gameState !== null ? (
-    <Game {...props} gameState={gameStore.gameState} />
+    <Game {...props} />
   ) : (
-    <Lobby {...props} gameRoom={gameStore.gameRoom} />
+    <Lobby {...props} />
   );
 });
 
-function Game(props: GameProps & { gameState: GameState }) {
+function Game(props: GameProps) {
   return <Scoreboard />;
 }
 
-function Scoreboard() {
+const Scoreboard = observer(() => {
   const teams = [
     {
       name: "A",
@@ -144,69 +171,70 @@ function Scoreboard() {
       </div>
     </div>
   );
-}
+});
 
-function TeamScore({
-  name,
-  score,
-  isTyping,
-  isPicker,
-  guessOrder,
-  players,
-  rank,
-  isLeader,
-  outOfGuesses,
-}: {
-  name: string;
-  score: number;
-  isTyping?: boolean;
-  isPicker?: boolean;
-  guessOrder?: number | null;
-  players: string[];
-  rank: number;
-  isLeader: boolean;
-  outOfGuesses?: boolean;
-}) {
-  const bgColors = [
-    "bg-pink-300",
-    "bg-green-300",
-    "bg-blue-300",
-    "bg-yellow-300",
-  ];
-  const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
-  const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
+const TeamScore = observer(
+  ({
+    name,
+    score,
+    isTyping,
+    isPicker,
+    guessOrder,
+    players,
+    rank,
+    isLeader,
+    outOfGuesses,
+  }: {
+    name: string;
+    score: number;
+    isTyping?: boolean;
+    isPicker?: boolean;
+    guessOrder?: number | null;
+    players: string[];
+    rank: number;
+    isLeader: boolean;
+    outOfGuesses?: boolean;
+  }) => {
+    const bgColors = [
+      "bg-pink-300",
+      "bg-green-300",
+      "bg-blue-300",
+      "bg-yellow-300",
+    ];
+    const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+    const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
 
-  const rankSymbol = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return { emoji: "🥇", bg: "bg-yellow-500" };
-      case 2:
-        return { emoji: "🥈", bg: "bg-gray-300" };
-      case 3:
-        return { emoji: "🥉", bg: "bg-orange-400" };
-      default:
-        return null;
-    }
-  };
+    const rankSymbol = (rank: number) => {
+      switch (rank) {
+        case 1:
+          return { emoji: "🥇", bg: "bg-yellow-500" };
+        case 2:
+          return { emoji: "🥈", bg: "bg-gray-300" };
+        case 3:
+          return { emoji: "🥉", bg: "bg-orange-400" };
+        default:
+          return null;
+      }
+    };
 
-  const rankInfo = rankSymbol(rank);
+    const rankInfo = rankSymbol(rank);
 
-  const getGuessOrderLabel = (order: number) => {
-    switch (order) {
-      case 1:
-        return "1st";
-      case 2:
-        return "2nd";
-      case 3:
-        return "3rd";
-      default:
-        return `${order}th`;
-    }
-  };
+    const getGuessOrderLabel = (order: number) => {
+      switch (order) {
+        case 1:
+          return "1st";
+        case 2:
+          return "2nd";
+        case 3:
+          return "3rd";
+        default:
+          return `${order}th`;
+      }
+    };
 
-  return (
-    <div
-      className={`${bgColor} border-4 border-black p-3 sm:p-4 rounded-xl ${rotation} relative transition-all duration-300
+    return (
+      <div
+        className={`${bgColor} border-4 border-black p-3 sm:p-4 rounded-xl ${rotation} relative transition-all duration-300
         ${isTyping ? "scale-105 shadow-lg" : ""}
         ${
           guessOrder
@@ -220,79 +248,80 @@ function TeamScore({
             : ""
         }
         ${outOfGuesses ? "opacity-40" : ""}`}
-    >
-      {isPicker && (
-        <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
-          Current Picker
-        </div>
-      )}
-      <h3 className="text-xl sm:text-2xl font-black mb-2 uppercase relative">
-        <div className="flex items-center justify-between">
-          <span className="break-words pr-8">{name}</span>
-        </div>
-      </h3>
-      <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
-        <div className="text-lg sm:text-xl font-black">Score</div>
-        <div className="text-2xl sm:text-3xl font-black">{score}</div>
-      </div>
-      <div className="mt-2">
-        {players.map((player, index) => (
-          <div key={index} className="text-base sm:text-lg font-bold">
-            {player}
+      >
+        {isPicker && (
+          <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
+            Current Picker
           </div>
-        ))}
+        )}
+        <h3 className="text-xl sm:text-2xl font-black mb-2 uppercase relative">
+          <div className="flex items-center justify-between">
+            <span className="break-words pr-8">{name}</span>
+          </div>
+        </h3>
+        <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
+          <div className="text-lg sm:text-xl font-black">Score</div>
+          <div className="text-2xl sm:text-3xl font-black">{score}</div>
+        </div>
+        <div className="mt-2">
+          {players.map((player, index) => (
+            <div key={index} className="text-base sm:text-lg font-bold">
+              {player}
+            </div>
+          ))}
+        </div>
+        {isTyping && (
+          <div className="absolute -top-2 -right-2 bg-orange-400 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black animate-shake">
+            <span className="text-xs sm:text-sm font-bold">Typing</span>
+          </div>
+        )}
+        {guessOrder && (
+          <div
+            className={`absolute -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
+              guessOrder === 1
+                ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110 border-b-4 border-r-4 shadow-[0_0_10px_4px_rgba(255,215,0,0.5)]"
+                : "bg-gradient-to-r from-yellow-300 to-green-400 border-b-4 border-r-4"
+            }`}
+          >
+            <span
+              className={`text-base sm:text-lg font-bold text-black ${
+                guessOrder === 1 ? "text-lg sm:text-xl" : ""
+              }`}
+            >
+              {getGuessOrderLabel(guessOrder)}
+            </span>
+            <span
+              className={`ml-1 ${
+                guessOrder === 1 ? "text-lg sm:text-xl" : "text-xs sm:text-sm"
+              }`}
+            >
+              {guessOrder === 1 ? "🥇" : "🏆"}
+            </span>
+          </div>
+        )}
+        {outOfGuesses && (
+          <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
+            <span className="text-xs sm:text-sm font-bold text-white">
+              Out of Guesses
+            </span>
+          </div>
+        )}
+        {isLeader && (
+          <div className="absolute -top-4 -left-4 animate-bounce">
+            <span className="text-3xl sm:text-4xl">👑</span>
+          </div>
+        )}
+        {rankInfo && (
+          <div
+            className={`${rankInfo.bg} rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border-2 border-black flex-shrink-0 absolute bottom-2 right-2`}
+          >
+            <span className="text-xl sm:text-2xl">{rankInfo.emoji}</span>
+          </div>
+        )}
       </div>
-      {isTyping && (
-        <div className="absolute -top-2 -right-2 bg-orange-400 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black animate-shake">
-          <span className="text-xs sm:text-sm font-bold">Typing</span>
-        </div>
-      )}
-      {guessOrder && (
-        <div
-          className={`absolute -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
-            guessOrder === 1
-              ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110 border-b-4 border-r-4 shadow-[0_0_10px_4px_rgba(255,215,0,0.5)]"
-              : "bg-gradient-to-r from-yellow-300 to-green-400 border-b-4 border-r-4"
-          }`}
-        >
-          <span
-            className={`text-base sm:text-lg font-bold text-black ${
-              guessOrder === 1 ? "text-lg sm:text-xl" : ""
-            }`}
-          >
-            {getGuessOrderLabel(guessOrder)}
-          </span>
-          <span
-            className={`ml-1 ${
-              guessOrder === 1 ? "text-lg sm:text-xl" : "text-xs sm:text-sm"
-            }`}
-          >
-            {guessOrder === 1 ? "🥇" : "🏆"}
-          </span>
-        </div>
-      )}
-      {outOfGuesses && (
-        <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
-          <span className="text-xs sm:text-sm font-bold text-white">
-            Out of Guesses
-          </span>
-        </div>
-      )}
-      {isLeader && (
-        <div className="absolute -top-4 -left-4 animate-bounce">
-          <span className="text-3xl sm:text-4xl">👑</span>
-        </div>
-      )}
-      {rankInfo && (
-        <div
-          className={`${rankInfo.bg} rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border-2 border-black flex-shrink-0 absolute bottom-2 right-2`}
-        >
-          <span className="text-xl sm:text-2xl">{rankInfo.emoji}</span>
-        </div>
-      )}
-    </div>
-  );
-}
+    );
+  }
+);
 
 function FunFact() {
   const [fact, setFact] = useState(getRandomFact());
@@ -428,56 +457,58 @@ function getRandomFact() {
   return facts[Math.floor(Math.random() * facts.length)];
 }
 
-function Lobby({
-  gameId,
-  gameRoom,
-  isPlayerOnAnyTeam,
-  isCreator,
-  initialPlayerList,
-  currentPlayerId,
-}: GameProps & { gameRoom: RealtimeChannel | null }) {
-  return (
-    <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
-      <article className="prose">
-        <h1 className="text-gray-400">You are the host</h1>
-        <h2>How to start the game</h2>
-        <ol>
-          <li>
-            Make sure your Spotify is playing on a device everyone can hear
-          </li>
-          <li>When everyone is ready, click "Start Game" button below. </li>
-        </ol>
-        <button
-          onClick={() => {
-            getTeamsAndPlayersForGame({ gameId }).then((teams) => {
-              const state: GameState = {
-                picker: 2,
-                started: true,
-                score: {},
-                teams,
-              };
-              gameRoom?.send({
-                type: "broadcast",
-                event: "game",
-                payload: state,
+const Lobby = observer(
+  ({
+    gameId,
+    isPlayerOnAnyTeam,
+    isCreator,
+    initialPlayerList,
+    currentPlayerId,
+  }: GameProps) => {
+    const gameStore = useGameStore();
+    return (
+      <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
+        <article className="prose">
+          <h1 className="text-gray-400">You are the host</h1>
+          <h2>How to start the game</h2>
+          <ol>
+            <li>
+              Make sure your Spotify is playing on a device everyone can hear
+            </li>
+            <li>When everyone is ready, click "Start Game" button below. </li>
+          </ol>
+          <button
+            onClick={() => {
+              getTeamsAndPlayersForGame({ gameId }).then((teams) => {
+                const state: GameState = {
+                  picker: 2,
+                  started: true,
+                  score: {},
+                  teams,
+                };
+                gameStore.gameRoom?.send({
+                  type: "broadcast",
+                  event: "game",
+                  payload: state,
+                });
               });
-            });
-          }}
-          className="bg-blue-500 w-full hover:bg-blue-700 text-lg text-white font-bold py-2 px-4 rounded mb-3"
-        >
-          Start Game
-        </button>
-        <h3>
-          Cool people waiting to play <LiveIndicator />
-        </h3>
-        <LivePlayerList
-          isPlayerOnAnyTeam={isPlayerOnAnyTeam}
-          isGameCreator={isCreator}
-          gameId={gameId}
-          initialPlayerList={initialPlayerList}
-          currentPlayerId={currentPlayerId}
-        />
-      </article>
-    </main>
-  );
-}
+            }}
+            className="bg-blue-500 w-full hover:bg-blue-700 text-lg text-white font-bold py-2 px-4 rounded mb-3"
+          >
+            Start Game
+          </button>
+          <h3>
+            Cool people waiting to play <LiveIndicator />
+          </h3>
+          <LivePlayerList
+            isPlayerOnAnyTeam={isPlayerOnAnyTeam}
+            isGameCreator={isCreator}
+            gameId={gameId}
+            initialPlayerList={initialPlayerList}
+            currentPlayerId={currentPlayerId}
+          />
+        </article>
+      </main>
+    );
+  }
+);
