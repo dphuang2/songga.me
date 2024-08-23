@@ -73,6 +73,17 @@ export class GameStore {
     this.gameRoom = room;
   }
 
+  isOnPickingTeam(): boolean {
+    if (!this.gameState || !this.currentPlayerId) return false;
+
+    const pickingTeam = this.gameState.teams.find((team) => team.picker);
+    if (!pickingTeam) return false;
+
+    return pickingTeam.players.some(
+      (player) => player.playerId === this.currentPlayerId
+    );
+  }
+
   startGame({ gameId }: { gameId: number }) {
     if (this.gameRoom === null)
       throw Error("Can't start game without connection to game channel");

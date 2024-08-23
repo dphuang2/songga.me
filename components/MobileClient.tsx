@@ -12,6 +12,7 @@ import { MusicIcon } from "./MusicIcon";
 import { observer } from "mobx-react-lite";
 import { createContext, useContext } from "react";
 import { ShareThisCode } from "./ShareThisCode";
+import { FunFact } from "./FunFact";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
@@ -80,7 +81,8 @@ export function MobileClient(props: GameProps & { player: Tables<"player"> }) {
 }
 
 const Game = observer(() => {
-  return true ? <Picker /> : <Guesser hasPicked={false} />;
+  const store = useGameStore();
+  return store.isOnPickingTeam() ? <Picker /> : <Guesser hasPicked={false} />;
 });
 
 const Picker = observer(() => {
@@ -226,6 +228,7 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
           <p className="text-xl font-bold text-center">
             The picker hasn't chosen a song yet. Please wait...
           </p>
+          <FunFact />
         </div>
       </div>
     );
