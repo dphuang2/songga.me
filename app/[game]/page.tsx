@@ -28,12 +28,9 @@ export default async function Game({ params }: { params: { game: string } }) {
   const isCreator = await isGameCreator({ gameId });
   const currentPlayerId = (await getUserAndPlayer({ supabase })).player.id;
   const players = await getTeamsAndPlayersForGame({ gameId });
-  const isOnTeam = await isPlayerOnAnyTeam({
-    gameId,
-    playerId: currentPlayerId,
-  });
   return (
     <div>
+      {/* TODO: this should be based on isMobile, but I need a way to do development */}
       {true && !isCreator ? (
         <Mobile
           initialPlayerList={players}
@@ -42,7 +39,7 @@ export default async function Game({ params }: { params: { game: string } }) {
           gameId={gameId}
           link={link}
           gameSlug={params.game}
-          isPlayerOnAnyTeam={isOnTeam}
+          isPlayerOnAnyTeam={true}
         />
       ) : (
         <DesktopClient
@@ -52,7 +49,7 @@ export default async function Game({ params }: { params: { game: string } }) {
           isCreator={isCreator}
           gameId={gameId}
           link={link}
-          isPlayerOnAnyTeam={isOnTeam}
+          isPlayerOnAnyTeam={false}
         />
       )}
     </div>

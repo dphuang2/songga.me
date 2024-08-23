@@ -18,6 +18,12 @@ export function JoinGameForm() {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && gameCode.length === 4) {
+      handleJoinGame();
+    }
+  };
+
   const isButtonDisabled = gameCode.length !== 4;
 
   return (
@@ -30,6 +36,7 @@ export function JoinGameForm() {
           className="w-full px-4 py-3 text-2xl font-bold uppercase border-4 border-black rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400"
           value={gameCode}
           onChange={handleInputChange}
+          onKeyUp={handleKeyPress}
         />
       </div>
       <button
