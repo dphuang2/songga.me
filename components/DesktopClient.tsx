@@ -334,19 +334,7 @@ const Lobby = observer(
           {isCreator && (
             <button
               onClick={() => {
-                getTeamsAndPlayersForGame({ gameId }).then((teams) => {
-                  const state: GameState = {
-                    picker: 2,
-                    started: true,
-                    score: {},
-                    teams,
-                  };
-                  gameStore.gameRoom?.send({
-                    type: "broadcast",
-                    event: "game",
-                    payload: state,
-                  });
-                });
+                gameStore.startGame({ gameId });
               }}
               className="w-full bg-blue-500 hover:bg-blue-700 text-white text-xl font-bold py-3 px-6 rounded-xl border-4 border-black transition-colors mb-6"
             >

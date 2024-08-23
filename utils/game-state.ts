@@ -2,6 +2,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { makeAutoObservable } from "mobx";
 import { z } from "zod";
 import { createClient } from "./supabase/client";
+import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
 
 export const gameStateSchema = z.object({
   picker: z.number(),
@@ -42,6 +43,24 @@ export class GameStore {
 
   setGameRoom(room: RealtimeChannel) {
     this.gameRoom = room;
+  }
+
+  startGame({ gameId }: { gameId: number }) {
+    if (this.gameRoom === null)
+      throw Error("Can't start game without connection to game channel");
+    getTeamsAndPlayersForGame({ gameId }).then((teams) => {
+      const state: GameState = {
+        picker: 2,
+        started: true,
+        score: {},
+        teams,
+      };
+      this.gameRoom?.send({
+        type: "broadcast",
+        event: "game",
+        payload: state,
+      });
+    });
   }
 
   initializeGameRoom(gameSlug: string) {
