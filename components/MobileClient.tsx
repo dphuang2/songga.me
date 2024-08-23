@@ -11,6 +11,7 @@ import { MusicIcon } from "./MusicIcon";
 
 import { observer } from "mobx-react-lite";
 import { createContext, useContext } from "react";
+import { ShareThisCode } from "./ShareThisCode";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
@@ -389,6 +390,7 @@ const Lobby = observer(
     currentPlayerId,
     initialPlayerList,
     player,
+    gameSlug,
     isPlayerOnAnyTeam,
   }: GameProps & {
     player: Tables<"player">;
@@ -425,15 +427,13 @@ const Lobby = observer(
             />
           </div>
 
+          <ShareThisCode code={gameSlug} />
+
           {isCreator && (
             <button className="w-full bg-blue-500 hover:bg-blue-700 text-white text-xl font-bold py-3 px-6 rounded-xl border-4 border-black transition-colors">
               Start Game
             </button>
           )}
-
-          <p className="text-sm text-center mt-4">
-            Lobby: <span className="font-bold">{link}</span>
-          </p>
         </div>
       </div>
     );
