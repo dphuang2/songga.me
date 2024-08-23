@@ -5,55 +5,106 @@ import { LiveIndicator } from "./LiveIndicator";
 import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
 import { Tables } from "@/utils/supabase/database.types";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { GameState, gameStateSchema } from "@/utils/game-state";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { MusicIcon } from "./MusicIcon";
 
-export function MobileClient({
-  link,
-  gameId,
-  isCreator,
-  currentPlayerId,
-  initialPlayerList,
-  player,
-  gameSlug,
-  isPlayerOnAnyTeam,
-}: GameProps & {
-  player: Tables<"player">;
-}) {
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  const gameRoom = useRef<RealtimeChannel | null>(null);
-  useEffect(() => {
-    if (gameRoom.current !== null) return;
+import { makeAutoObservable } from "mobx";
+import { observer } from "mobx-react-lite";
+import { createContext, useContext } from "react";
+
+class GameStore {
+  gameState: GameState | null = null;
+  gameRoom: RealtimeChannel | null = null;
+
+  constructor(gameSlug: string) {
+    makeAutoObservable(this);
+    this.initializeGameRoom(gameSlug);
+  }
+
+  setGameState(state: GameState | null) {
+    this.gameState = state;
+  }
+
+  initializeGameRoom(gameSlug: string) {
     const supabase = createClient();
-    gameRoom.current = supabase.channel(gameSlug, {
+    this.gameRoom = supabase.channel(gameSlug, {
       config: { broadcast: { self: true } },
     });
-    gameRoom.current.on("broadcast", { event: "game" }, ({ payload }) => {
+    this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
       console.log(payload);
-      setGameState(gameStateSchema.parse(payload));
+      this.setGameState(gameStateSchema.parse(payload));
     });
-    gameRoom.current.subscribe();
-    return () => {
-      gameRoom.current?.unsubscribe();
-      gameRoom.current = null;
-    };
-  }, []);
-  return gameState !== null ? (
-    <Game />
-  ) : (
-    <Lobby
-      gameSlug={gameSlug}
-      link={link}
-      gameId={gameId}
-      isCreator={isCreator}
-      currentPlayerId={currentPlayerId}
-      initialPlayerList={initialPlayerList}
-      player={player}
-      isPlayerOnAnyTeam={isPlayerOnAnyTeam}
-    />
+    this.gameRoom.subscribe();
+  }
+
+  cleanup() {
+    this.gameRoom?.unsubscribe();
+    this.gameRoom = null;
+  }
+}
+
+const GameStoreContext = createContext<GameStore | null>(null);
+
+const GameStoreProvider: React.FC<{
+  children: React.ReactNode;
+  gameSlug: string;
+}> = ({ children, gameSlug }) => {
+  const store = new GameStore(gameSlug);
+  return (
+    <GameStoreContext.Provider value={store}>
+      {children}
+    </GameStoreContext.Provider>
+  );
+};
+
+const useGameStore = () => {
+  const store = useContext(GameStoreContext);
+  if (!store) {
+    throw new Error("useGameStore must be used within a GameStoreProvider");
+  }
+  return store;
+};
+
+const MobileClientInner = observer(
+  ({
+    link,
+    gameId,
+    isCreator,
+    currentPlayerId,
+    initialPlayerList,
+    player,
+    gameSlug,
+    isPlayerOnAnyTeam,
+  }: GameProps & {
+    player: Tables<"player">;
+  }) => {
+    const store = useGameStore();
+
+    return store.gameState !== null ? (
+      <Game />
+    ) : (
+      <Lobby
+        gameSlug={gameSlug}
+        link={link}
+        gameId={gameId}
+        isCreator={isCreator}
+        currentPlayerId={currentPlayerId}
+        initialPlayerList={initialPlayerList}
+        player={player}
+        isPlayerOnAnyTeam={isPlayerOnAnyTeam}
+      />
+    );
+  }
+);
+
+export function MobileClient(props: GameProps & { player: Tables<"player"> }) {
+  return (
+    <GameStoreProvider gameSlug={props.gameSlug}>
+      <MobileClientInner {...props} />
+    </GameStoreProvider>
   );
 }
 
