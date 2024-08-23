@@ -428,33 +428,28 @@ const Lobby = observer(
     player: Tables<"player">;
   }) => {
     return (
-      <main className="container mx-auto py-16 flex flex-col justify-center items-center px-4">
-        <article className="prose">
-          <p className="text-sm text-gray-400">
-            Currently in the lobby for{" "}
-            <span className="text-blue-300">{link}</span>
-          </p>
-          <div className="p-8 shadow-md border rounded-md mb-12">
-            <h2>Step 1: What is your name?</h2>
+      <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-16 font-sans fixed inset-0 overflow-y-auto">
+        <div className="bg-white border-8 border-black rounded-3xl p-4 sm:p-6 w-full max-w-md mx-auto transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px] mt-8 sm:mt-12 md:mt-16 lg:mt-20">
+          <h1 className="text-2xl sm:text-3xl font-black uppercase bg-purple-300 px-3 py-1 sm:px-4 sm:py-2 rounded-xl border-4 border-black transform -rotate-2 mb-4 sm:mb-6">
+            Welcome to the Lobby!
+          </h1>
+
+          <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1">
+            <h2 className="text-xl font-bold mb-2">
+              Step 1: What's your name?
+            </h2>
             <PlayerNameInput
               name={player.name}
               customName={player.custom_name}
               playerId={player.id}
             />
           </div>
-          {/* {isGameCreator && (
-        <button className="bg-blue-500 w-full hover:bg-blue-700 text-lg text-white font-bold py-2 px-4 rounded mb-3">
-          Start Game
-        </button>
-      )} */}
 
-          <div className="p-8 shadow-md border rounded-md mb-12">
-            <h2>
-              Step 2: Form teams of 2 by joining another player, if you want
-            </h2>
-            <h4>
-              Players waiting to have fun! <LiveIndicator />
-            </h4>
+          <div className="mb-6 bg-orange-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
+            <h2 className="text-xl font-bold mb-2">Step 2: Form teams of 2</h2>
+            <h3 className="text-lg font-bold mb-2">
+              Cool people waiting to play <LiveIndicator />
+            </h3>
             <LivePlayerList
               isPlayerOnAnyTeam={isPlayerOnAnyTeam}
               currentPlayerId={currentPlayerId}
@@ -463,8 +458,18 @@ const Lobby = observer(
               initialPlayerList={initialPlayerList}
             />
           </div>
-        </article>
-      </main>
+
+          {isCreator && (
+            <button className="w-full bg-blue-500 hover:bg-blue-700 text-white text-xl font-bold py-3 px-6 rounded-xl border-4 border-black transition-colors">
+              Start Game
+            </button>
+          )}
+
+          <p className="text-sm text-center mt-4">
+            Lobby: <span className="font-bold">{link}</span>
+          </p>
+        </div>
+      </div>
     );
   }
 );

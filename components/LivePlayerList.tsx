@@ -47,66 +47,68 @@ const LivePlayerList = ({
       supabase.removeChannel(channel);
     };
   }, []);
-
   return (
-    <ol>
+    <ul className="space-y-4">
       {playerList.map((team, i) => (
-        <li key={i}>
-          {team.players.map((player, i) => (
-            <span key={i}>
-              {player.playerId === currentPlayerId ? (
-                <strong>{player.name}</strong>
-              ) : (
-                <span>{player.name}</span>
-              )}
-              {isGameCreator && player.playerId !== currentPlayerId && (
-                <button
-                  onClick={() =>
-                    kickPlayerFromGame({
-                      teamId: team.teamId,
-                      playerId: player.playerId,
-                    })
-                  }
-                  className="ml-1 text-sm text-red-500 hover:text-red-700"
-                >
-                  Kick Player
-                </button>
-              )}
-              {i < team.players.length - 1 && team.players.length > 1
-                ? " & "
-                : ""}
-            </span>
-          ))}
-          {team.players.some(
-            (player) => player.playerId === currentPlayerId
-          ) ? (
-            team.players.length === 1 ? null : (
-              <>
-                {" / "}
+        <li
+          key={i}
+          className="bg-white border-4 border-black rounded-xl p-4 transform rotate-1 shadow-lg"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {team.players.map((player, i) => (
+              <span key={i} className="inline-flex items-center">
+                {player.playerId === currentPlayerId ? (
+                  <strong className="font-black text-lg bg-yellow-300 px-2 py-1 rounded-md border-2 border-black transform -rotate-1">
+                    {player.name}
+                  </strong>
+                ) : (
+                  <span className="font-bold text-lg">{player.name}</span>
+                )}
+                {isGameCreator && player.playerId !== currentPlayerId && (
+                  <button
+                    onClick={() =>
+                      kickPlayerFromGame({
+                        teamId: team.teamId,
+                        playerId: player.playerId,
+                      })
+                    }
+                    className="ml-2 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded-md border-2 border-black transform rotate-1 transition-transform hover:scale-105"
+                  >
+                    Kick
+                  </button>
+                )}
+                {i < team.players.length - 1 && team.players.length > 1 && (
+                  <span className="mx-2 text-2xl font-black">&</span>
+                )}
+              </span>
+            ))}
+          </div>
+          <div className="mt-3">
+            {team.players.some(
+              (player) => player.playerId === currentPlayerId
+            ) ? (
+              team.players.length === 1 ? null : (
                 <button
                   onClick={() => leaveTeam({ gameId })}
-                  className="text-sm text-red-500 hover:text-red-700"
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl border-4 border-black transform -rotate-1 transition-transform hover:scale-105"
                 >
                   Leave Team
                 </button>
-              </>
-            )
-          ) : team.players.length === 1 && isPlayerOnAnyTeam ? (
-            <>
-              {" / "}
+              )
+            ) : team.players.length === 1 && isPlayerOnAnyTeam ? (
               <button
                 onClick={() =>
                   joinTeam({ newTeamId: team.teamId, gameId: gameId })
                 }
-                className="text-sm text-blue-500 hover:text-blue-700"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl border-4 border-black transform rotate-1 transition-transform hover:scale-105"
               >
                 Join Team
               </button>
-            </>
-          ) : null}
+            ) : null}
+          </div>
         </li>
       ))}
-    </ol>
+    </ul>
   );
 };
 
