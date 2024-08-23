@@ -394,7 +394,7 @@ const Lobby = observer(
     player: Tables<"player">;
   }) => {
     return (
-      <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-16 font-sans fixed inset-0 overflow-y-auto">
+      <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-36 font-sans fixed inset-0 overflow-y-auto">
         <div className="bg-white border-8 border-black rounded-3xl p-4 sm:p-6 w-full max-w-md mx-auto transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px] mt-8 sm:mt-12 md:mt-16 lg:mt-20">
           <h1 className="text-2xl sm:text-3xl font-black uppercase bg-purple-300 px-3 py-1 sm:px-4 sm:py-2 rounded-xl border-4 border-black transform -rotate-2 mb-4 sm:mb-6">
             Welcome to the Lobby!
