@@ -58,7 +58,85 @@ export function MobileClient({
 }
 
 function Game() {
-  return <Guesser />;
+  return true ? <Picker /> : <Guesser />;
+}
+
+function Picker() {
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<string[]>([]);
+  const [selectedSong, setSelectedSong] = useState("");
+
+  const handleSearch = (query: string) => {
+    setSearch(query);
+    // Simulated search results - replace with actual API call
+    const mockResults = query
+      ? [`Song 1 - ${query}`, `Song 2 - ${query}`, `Song 3 - ${query}`]
+      : [];
+    setResults(mockResults);
+  };
+
+  const handleSelectSong = (song: string) => {
+    setSelectedSong(song);
+    setResults([]);
+    setSearch("");
+  };
+
+  return (
+    <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-16 font-sans fixed inset-0 overflow-y-auto">
+      <div className="bg-white border-8 border-black rounded-3xl p-4 sm:p-6 w-full max-w-md mx-auto transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px] mt-8 sm:mt-12 md:mt-16 lg:mt-20">
+        <h2 className="text-2xl sm:text-3xl font-black uppercase bg-purple-300 px-3 py-1 sm:px-4 sm:py-2 rounded-xl border-4 border-black transform -rotate-2 mb-4 sm:mb-6">
+          You are the Picker!
+        </h2>
+        <div className="mb-4 sm:mb-6">
+          <label
+            className="text-xl font-black uppercase mb-2 bg-orange-300 px-4 py-2 rounded-xl border-4 border-black transform -rotate-1 inline-block"
+            htmlFor="songSearch"
+          >
+            Choose a song:
+          </label>
+          <div className="relative mt-2">
+            <input
+              type="text"
+              id="songSearch"
+              className="w-full px-4 py-2 text-lg border-4 border-black rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400"
+              placeholder="Search by artist or song name..."
+              value={search}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+            {results.length > 0 && (
+              <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
+                <div className="max-h-48 overflow-y-auto">
+                  {results.map((result, index) => (
+                    <button
+                      key={index}
+                      className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors"
+                      onClick={() => handleSelectSong(result)}
+                    >
+                      {result}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        {selectedSong && (
+          <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1">
+            <p className="text-xl font-bold">Selected Song:</p>
+            <p className="text-2xl font-black">{selectedSong}</p>
+          </div>
+        )}
+        <button
+          className={`w-full bg-blue-500 hover:bg-blue-700 text-white text-xl font-bold py-3 px-6 rounded-xl border-4 border-black transition-colors ${
+            !selectedSong ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          disabled={!selectedSong}
+        >
+          Start Round
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function Guesser() {
