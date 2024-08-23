@@ -58,6 +58,10 @@ export function MobileClient({
 }
 
 function Game() {
+  return <Guesser />;
+}
+
+function Guesser() {
   const [guessesLeft, setGuessesLeft] = useState({ artist: 1, song: 1 });
   const [artistSearch, setArtistSearch] = useState("");
   const [songSearch, setSongSearch] = useState("");
