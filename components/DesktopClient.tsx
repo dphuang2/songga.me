@@ -198,15 +198,10 @@ function TeamScore({
           Current Picker
         </div>
       )}
-      <h3 className="text-xl sm:text-2xl font-black mb-2 uppercase flex items-center flex-wrap">
-        <span className="break-words mr-2">{name}</span>
-        {rankInfo && (
-          <span
-            className={`mt-1 ${rankInfo.bg} rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border-2 border-black flex-shrink-0`}
-          >
-            <span className="text-xl sm:text-2xl">{rankInfo.emoji}</span>
-          </span>
-        )}
+      <h3 className="text-xl sm:text-2xl font-black mb-2 uppercase relative">
+        <div className="flex items-center justify-between">
+          <span className="break-words pr-8">{name}</span>
+        </div>
       </h3>
       <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
         <div className="text-lg sm:text-xl font-black">Score</div>
@@ -258,6 +253,13 @@ function TeamScore({
       {isLeader && (
         <div className="absolute -top-4 -left-4 animate-bounce">
           <span className="text-3xl sm:text-4xl">👑</span>
+        </div>
+      )}
+      {rankInfo && (
+        <div
+          className={`${rankInfo.bg} rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border-2 border-black flex-shrink-0 absolute bottom-2 right-2`}
+        >
+          <span className="text-xl sm:text-2xl">{rankInfo.emoji}</span>
         </div>
       )}
     </div>
