@@ -50,13 +50,18 @@ function Scoreboard() {
     },
     { name: "B", score: 46, guessOrder: 1, players: ["Bob", "Bill"] },
     {
-      name: "C",
+      name: "Solo C-Note",
       score: 38,
       isPicker: true,
       players: ["Charlie"],
       guessOrder: null,
     },
-    { name: "D", score: 51, guessOrder: 2, players: ["David", "Diana"] },
+    {
+      name: "Dazzling D&D",
+      score: 51,
+      guessOrder: 2,
+      players: ["David", "Diana"],
+    },
     {
       name: "E",
       score: 40,
@@ -193,11 +198,11 @@ function TeamScore({
           Current Picker
         </div>
       )}
-      <h3 className="text-2xl font-black mb-2 uppercase flex items-center">
-        Team {name}
+      <h3 className="text-2xl font-black mb-2 uppercase flex items-center flex-wrap">
+        <span className="break-words mr-2">{name}</span>
         {rankInfo && (
           <span
-            className={`ml-2 ${rankInfo.bg} rounded-full w-8 h-8 flex items-center justify-center border-2 border-black`}
+            className={`mt-1 ${rankInfo.bg} rounded-full w-8 h-8 flex items-center justify-center border-2 border-black flex-shrink-0`}
           >
             <span className="text-2xl">{rankInfo.emoji}</span>
           </span>
@@ -223,8 +228,8 @@ function TeamScore({
         <div
           className={`absolute -top-8 -right-4 rounded-full px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
             guessOrder === 1
-              ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110"
-              : "bg-gradient-to-r from-yellow-300 to-green-400"
+              ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110 border-b-4 border-r-4 shadow-[0_0_10px_4px_rgba(255,215,0,0.5)]"
+              : "bg-gradient-to-r from-yellow-300 to-green-400 border-b-4 border-r-4"
           }`}
         >
           <span
