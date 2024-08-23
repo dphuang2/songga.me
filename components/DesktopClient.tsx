@@ -85,7 +85,7 @@ const Scoreboard = observer(() => {
       name: "Dazzling D&D",
       score: 51,
       guessOrder: 2,
-      players: ["David", "Diana"],
+      players: ["David"],
     },
     {
       name: "E",
@@ -224,11 +224,11 @@ const TeamScore = observer(
             Current Picker
           </div>
         )}
-        <h3 className="text-xl sm:text-2xl font-black mb-2 uppercase relative">
+        {/* <h3 className="text-xl sm:text-2xl font-black mb-2 uppercase relative">
           <div className="flex items-center justify-between">
             <span className="break-words pr-8">{name}</span>
           </div>
-        </h3>
+        </h3> */}
         <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
           <div className="text-lg sm:text-xl font-black">Score</div>
           <div className="text-2xl sm:text-3xl font-black">{score}</div>
