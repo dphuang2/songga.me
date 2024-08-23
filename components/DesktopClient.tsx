@@ -4,48 +4,12 @@ import { GameProps } from "@/app/[game]/page";
 import { LiveIndicator } from "./LiveIndicator";
 import LivePlayerList from "./LivePlayerList";
 import { useEffect, useState, createContext, useContext } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { GameState, gameStateSchema } from "@/utils/game-state";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { GameState } from "@/utils/game-state";
 import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 import { MusicIcon } from "./MusicIcon";
-import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { FunFact } from "./FunFact";
-
-class GameStore {
-  gameState: GameState | null = null;
-  gameRoom: RealtimeChannel | null = null;
-
-  constructor() {
-    makeAutoObservable(this);
-  }
-
-  setGameState(state: GameState) {
-    this.gameState = state;
-  }
-
-  setGameRoom(room: RealtimeChannel) {
-    this.gameRoom = room;
-  }
-
-  initializeGameRoom(gameSlug: string) {
-    const supabase = createClient();
-    this.gameRoom = supabase.channel(gameSlug, {
-      config: { broadcast: { self: true } },
-    });
-    this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
-      console.log(payload);
-      this.setGameState(gameStateSchema.parse(payload));
-    });
-    this.gameRoom.subscribe();
-  }
-
-  cleanup() {
-    this.gameRoom?.unsubscribe();
-    this.gameRoom = null;
-  }
-}
+import { GameStore } from "@/utils/game-state";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 

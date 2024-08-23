@@ -6,45 +6,11 @@ import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
 import { Tables } from "@/utils/supabase/database.types";
 import { useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { GameState, gameStateSchema } from "@/utils/game-state";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { GameStore } from "@/utils/game-state";
 import { MusicIcon } from "./MusicIcon";
 
-import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { createContext, useContext } from "react";
-
-class GameStore {
-  gameState: GameState | null = null;
-  gameRoom: RealtimeChannel | null = null;
-
-  constructor(gameSlug: string) {
-    makeAutoObservable(this);
-    this.initializeGameRoom(gameSlug);
-  }
-
-  setGameState(state: GameState | null) {
-    this.gameState = state;
-  }
-
-  initializeGameRoom(gameSlug: string) {
-    const supabase = createClient();
-    this.gameRoom = supabase.channel(gameSlug, {
-      config: { broadcast: { self: true } },
-    });
-    this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
-      console.log(payload);
-      this.setGameState(gameStateSchema.parse(payload));
-    });
-    this.gameRoom.subscribe();
-  }
-
-  cleanup() {
-    this.gameRoom?.unsubscribe();
-    this.gameRoom = null;
-  }
-}
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
