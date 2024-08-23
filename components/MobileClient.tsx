@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { GameState, gameStateSchema } from "@/utils/game-state";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { FaMusic } from "react-icons/fa";
+import { MusicIcon } from "./MusicIcon";
 
 export function MobileClient({
   link,
@@ -58,11 +58,13 @@ export function MobileClient({
 }
 
 function Game() {
-  const [guessesLeft, setGuessesLeft] = useState(2);
+  const [guessesLeft, setGuessesLeft] = useState({ artist: 1, song: 1 });
   const [artistSearch, setArtistSearch] = useState("");
   const [songSearch, setSongSearch] = useState("");
   const [artistResults, setArtistResults] = useState<string[]>([]);
   const [songResults, setSongResults] = useState<string[]>([]);
+  const [correctArtist, setCorrectArtist] = useState(false);
+  const [correctSong, setCorrectSong] = useState(false);
 
   const handleSearch = (type: "artist" | "song", query: string) => {
     // Simulated search results - replace with actual API call
@@ -78,8 +80,20 @@ function Game() {
 
   const handleGuess = (type: "artist" | "song", name: string) => {
     console.log(`Guessed ${type}: ${name}`);
-    setGuessesLeft((prev) => Math.max(0, prev - 1));
-    // Add logic to check if the guess is correct
+    setGuessesLeft((prev) => ({
+      ...prev,
+      [type]: Math.max(0, prev[type] - 1),
+    }));
+    // Simulate checking if the guess is correct
+    const isCorrect = Math.random() < 0.5; // 50% chance of being correct
+
+    if (isCorrect) {
+      if (type === "artist") {
+        setCorrectArtist(true);
+      } else {
+        setCorrectSong(true);
+      }
+    }
     // Update game state accordingly
     if (type === "artist") {
       setArtistSearch(name);
@@ -110,86 +124,144 @@ function Game() {
             <span className="text-lg sm:text-xl font-bold mr-2 bg-purple-300 px-3 py-1 sm:px-4 sm:py-2 rounded-xl border-4 border-black transform -rotate-2">
               Guesses:
             </span>
-            {[1, 2].map((guess) => (
-              <div
-                key={guess}
-                className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center border-4 border-black rounded-xl ${
-                  guess <= guessesLeft ? "bg-blue-300" : "bg-gray-300"
+            <div
+              className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center border-4 border-black rounded-xl ${
+                correctArtist
+                  ? "bg-green-400 animate-bounce"
+                  : guessesLeft.artist > 0
+                  ? "bg-blue-300"
+                  : "bg-gray-300"
+              }`}
+            >
+              <MusicIcon
+                className={`text-3xl sm:text-4xl ${
+                  correctArtist
+                    ? "text-white "
+                    : guessesLeft.artist > 0
+                    ? "text-black"
+                    : "text-gray-500"
                 }`}
-              >
-                <FaMusic
-                  className={`text-3xl sm:text-4xl ${
-                    guess <= guessesLeft ? "text-black" : "text-gray-500"
-                  }`}
-                />
-              </div>
-            ))}
+              />
+            </div>
+            <div
+              className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center border-4 border-black rounded-xl ${
+                correctSong
+                  ? "bg-green-400 animate-bounce"
+                  : guessesLeft.song > 0
+                  ? "bg-blue-300"
+                  : "bg-gray-300"
+              }`}
+            >
+              <MusicIcon
+                className={`text-3xl sm:text-4xl ${
+                  correctSong
+                    ? "text-white"
+                    : guessesLeft.song > 0
+                    ? "text-black"
+                    : "text-gray-500"
+                }`}
+              />
+            </div>
           </div>
         </div>
 
-        {guessesLeft === 0 && (
-          <div className="mb-6 bg-red-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
-            <p className="text-xl font-bold text-center">No guesses left!</p>
-          </div>
-        )}
+        {guessesLeft.artist === 0 &&
+          guessesLeft.song === 0 &&
+          !correctArtist &&
+          !correctSong && (
+            <div className="mb-6 bg-red-300 border-4 border-black p-4 rounded-xl transform -rotate-1 animate-shake">
+              <p className="text-xl font-bold text-center">No guesses left!</p>
+            </div>
+          )}
 
         {[
           {
-            type: "artist",
+            type: "artist" as const,
             search: artistSearch,
             setSearch: setArtistSearch,
             results: artistResults,
           },
           {
-            type: "song",
+            type: "song" as const,
             search: songSearch,
             setSearch: setSongSearch,
             results: songResults,
           },
-        ].map(({ type, search, setSearch, results }) => (
-          <div key={type} className="mb-6">
-            <label
-              className={`text-xl font-black uppercase mb-2 bg-orange-300 px-4 py-2 rounded-xl border-4 border-black transform ${
-                type === "artist" ? "-rotate-1" : "rotate-2"
-              } inline-block`}
-            >
-              Guess the {type}:
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                className={`w-full px-4 py-2 text-lg border-4 border-black rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 ${
-                  guessesLeft === 0 ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
-                placeholder={`Search for ${type}...`}
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  handleSearch(type as "artist" | "song", e.target.value);
-                }}
-                onFocus={() => handleFocus(type as "artist" | "song")}
-                disabled={guessesLeft === 0}
-              />
-              {results.length > 0 && guessesLeft > 0 && (
-                <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
-                  <div className="max-h-48 overflow-y-auto">
-                    {results.map((result, index) => (
-                      <button
-                        key={index}
-                        className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors"
-                        onClick={() =>
-                          handleGuess(type as "artist" | "song", result)
-                        }
-                      >
-                        {result}
-                      </button>
-                    ))}
+        ].map(
+          ({
+            type,
+            search,
+            setSearch,
+            results,
+          }: {
+            type: "artist" | "song";
+            search: string;
+            setSearch: React.Dispatch<React.SetStateAction<string>>;
+            results: any[];
+          }) => (
+            <div key={type} className="mb-6">
+              <label
+                className={`text-xl font-black uppercase mb-2 bg-orange-300 px-4 py-2 rounded-xl border-4 border-black transform ${
+                  type === "artist" ? "-rotate-1" : "rotate-2"
+                } inline-block`}
+              >
+                Guess the {type}:
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className={`w-full px-4 py-2 text-lg border-4 rounded-xl focus:outline-none focus:ring-4 ${
+                    (type === "artist" && correctArtist) ||
+                    (type === "song" && correctSong)
+                      ? "bg-green-200 border-green-500 text-green-700 font-bold"
+                      : guessesLeft[type] === 0
+                      ? "bg-gray-200 cursor-not-allowed border-black"
+                      : "border-black focus:ring-blue-400"
+                  }`}
+                  placeholder={`${
+                    (type === "artist" && correctArtist) ||
+                    (type === "song" && correctSong)
+                      ? `Correct ${type}!`
+                      : `Search for ${type}...`
+                  }`}
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    handleSearch(type as "artist" | "song", e.target.value);
+                  }}
+                  onFocus={() => handleFocus(type as "artist" | "song")}
+                  disabled={
+                    guessesLeft[type] === 0 ||
+                    (type === "artist" ? correctArtist : correctSong)
+                  }
+                />
+                {((type === "artist" && correctArtist) ||
+                  (type === "song" && correctSong)) && (
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-2xl">
+                    ✓
+                  </span>
+                )}
+                {results.length > 0 && guessesLeft[type] > 0 && (
+                  <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
+                    <div className="max-h-48 overflow-y-auto">
+                      {results.map((result, index) => (
+                        <button
+                          key={index}
+                          className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors"
+                          onClick={() =>
+                            handleGuess(type as "artist" | "song", result)
+                          }
+                        >
+                          {result}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 import { GameState, gameStateSchema } from "@/utils/game-state";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
+import { MusicIcon } from "./MusicIcon";
 
 export function DesktopClient(props: GameProps) {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -75,14 +76,7 @@ function Scoreboard() {
     <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 sm:p-8 font-sans">
       <div className="relative bg-white border-8 border-black rounded-3xl p-6 w-full max-w-4xl transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
         <div className="absolute -top-8 -left-8 bg-red-500 w-16 h-16 rounded-full border-t-4 border-l-4 border-r-8 border-b-8 border-black flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="black"
-            className="w-10 h-10"
-          >
-            <path d="M19.952 1.651a.75.75 0 01.298.599V16.303a3 3 0 01-2.176 2.884l-1.32.377a2.553 2.553 0 11-1.403-4.909l2.311-.66a1.5 1.5 0 001.088-1.442V6.994l-9 2.572v9.737a3 3 0 01-2.176 2.884l-1.32.377a2.553 2.553 0 11-1.402-4.909l2.31-.66a1.5 1.5 0 001.088-1.442V9.017 5.25a.75.75 0 01.544-.721l10.5-3a.75.75 0 01.658.122z" />
-          </svg>
+          <MusicIcon />
         </div>
         <div className="mb-6 border-b-8 border-black pb-4">
           <div className="flex items-center gap-4 mb-4">
@@ -195,7 +189,7 @@ function TeamScore({
         ${outOfGuesses ? "opacity-40" : ""}`}
     >
       {isPicker && (
-        <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-3 py-1 rounded-full border-4 border-black font-bold text-sm transform rotate-12 animate-bounce shadow-lg">
+        <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-3 py-1 rounded-full border-4 border-black font-bold text-sm shadow-lg">
           Current Picker
         </div>
       )}
@@ -226,9 +220,22 @@ function TeamScore({
         </div>
       )}
       {guessOrder && (
-        <div className="absolute -top-8 -right-4 bg-green-400 rounded-full p-2 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
-          <span className="text-sm font-bold">
-            Guessed {getGuessOrderLabel(guessOrder)}!
+        <div
+          className={`absolute -top-8 -right-4 rounded-full px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
+            guessOrder === 1
+              ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110"
+              : "bg-gradient-to-r from-yellow-300 to-green-400"
+          }`}
+        >
+          <span
+            className={`text-lg font-bold text-black ${
+              guessOrder === 1 ? "text-xl" : ""
+            }`}
+          >
+            {getGuessOrderLabel(guessOrder)}
+          </span>
+          <span className={`ml-1 ${guessOrder === 1 ? "text-xl" : "text-sm"}`}>
+            {guessOrder === 1 ? "🥇" : "🏆"}
           </span>
         </div>
       )}
