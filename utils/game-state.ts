@@ -65,6 +65,10 @@ export class GameStore {
     this.initializeGameRoom();
   }
 
+  isHost(): boolean {
+    return this.currentPlayerId === undefined;
+  }
+
   allScoresAreSame(): boolean {
     if (!this.gameState || this.gameState.teams.length === 0) return true;
 
