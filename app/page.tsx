@@ -1,4 +1,5 @@
 import { CreateAGameButton } from "@/components/CreateAGameButton";
+import { JoinGameForm } from "@/components/JoinGameForm";
 import { SignInWithSpotifyButton } from "@/components/SignInWithSpotifyButton";
 import { createClient } from "@/utils/supabase/server";
 
@@ -41,7 +42,7 @@ export default async function Index() {
         </div>
 
         <div className="mb-6 bg-orange-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
-          <h2 className="text-2xl font-bold mb-4">Ready to play?</h2>
+          <h2 className="text-2xl font-bold mb-4">Want to start a game?</h2>
           {user ? (
             <CreateAGameButton />
           ) : (
@@ -52,6 +53,11 @@ export default async function Index() {
               <SignInWithSpotifyButton />
             </div>
           )}
+        </div>
+
+        <div className="mb-6 bg-blue-300 border-4 border-black p-4 rounded-xl transform rotate-1">
+          <h2 className="text-2xl font-bold mb-4">Or join an existing game:</h2>
+          <JoinGameForm />
         </div>
       </div>
     </div>

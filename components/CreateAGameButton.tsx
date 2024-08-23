@@ -4,6 +4,7 @@ import { createClient, SpotifyAuthStorage } from "@/utils/supabase/client";
 import humanId from "human-id";
 import { AccessToken, SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { SPOTIFY_SCOPES } from "./SignInWithSpotifyButton";
+import { MusicIcon } from "./MusicIcon";
 
 export function CreateAGameButton() {
   const supabase = createClient();
@@ -23,8 +24,6 @@ export function CreateAGameButton() {
       throw new Error(
         "No Spotify access token found. Please authenticate with Spotify."
       );
-
-    console.log(savedSpotifyAccessToken);
 
     // 1. Always refresh access token and save it
     const spotifyAccessToken = await SpotifyAuthStorage.refreshAccessToken(
@@ -48,7 +47,7 @@ export function CreateAGameButton() {
       .insert([
         {
           creator: user.id,
-          slug: humanId({ separator: ".", capitalize: false }),
+          slug: generateFourLetterCode(),
         },
       ])
       .select();
@@ -56,28 +55,26 @@ export function CreateAGameButton() {
 
     if (game === null || game.length === 0) throw new Error("No game created.");
 
-    // // 2. Add self to game
-    // const { error: membershipError } = await supabase
-    //   .from("game_user_membership")
-    //   .insert([
-    //     {
-    //       user_id: user.id,
-    //       game_id: game[0].id,
-    //     },
-    //   ])
-    //   .select();
-    // if (membershipError) {
-    //   console.error(membershipError);
-    // }
-
     window.location.href = `/${game[0].slug}`;
   };
   return (
     <button
       onClick={() => createGame()}
-      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      className="relative bg-blue-500 hover:bg-blue-700 text-white text-xl font-bold py-3 px-6 rounded-xl border-4 border-black transition-colors transform hover:rotate-1 hover:scale-105 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
     >
-      Spotify Connected - Create a Game
+      <span className="flex items-center justify-center">
+        <MusicIcon className="mr-2" />
+        Create a Game
+      </span>
     </button>
   );
+}
+
+function generateFourLetterCode() {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = 0; i < 4; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
 }

@@ -294,6 +294,7 @@ const Lobby = observer(
     currentPlayerId,
     initialPlayerList,
     isPlayerOnAnyTeam,
+    gameSlug,
   }: GameProps) => {
     const gameStore = useGameStore();
 
@@ -303,6 +304,18 @@ const Lobby = observer(
           <h1 className="text-3xl sm:text-4xl font-black uppercase bg-purple-300 px-3 py-1 sm:px-4 sm:py-2 rounded-xl border-4 border-black transform -rotate-2 mb-4 sm:mb-6">
             You are the Host!
           </h1>
+
+          <div className="mb-6 bg-blue-300 border-4 border-black p-4 rounded-xl transform rotate-2">
+            <h2 className="text-2xl font-bold mb-2">Room Code:</h2>
+            <div className="flex items-center justify-center bg-white border-4 border-black rounded-xl p-3">
+              <span className="text-4xl font-black tracking-wider">
+                {gameSlug}
+              </span>
+            </div>
+            <p className="text-sm text-center mt-2">
+              Share this code with your friends to join the game!
+            </p>
+          </div>
 
           <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1">
             <h2 className="text-2xl font-bold mb-2">How to start the game:</h2>
