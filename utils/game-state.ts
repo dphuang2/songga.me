@@ -30,10 +30,20 @@ export type GameState = z.infer<typeof gameStateSchema>;
 export class GameStore {
   gameState: GameState | null = null;
   gameRoom: RealtimeChannel | null = null;
+  gameCode: string;
+  currentPlayerId: number | undefined;
 
-  constructor(gameSlug?: string) {
+  constructor({
+    gameCode,
+    currentPlayerId,
+  }: {
+    gameCode: string;
+    currentPlayerId?: number;
+  }) {
+    this.currentPlayerId = currentPlayerId;
     makeAutoObservable(this);
-    if (gameSlug !== undefined) this.initializeGameRoom(gameSlug);
+    this.gameCode = gameCode;
+    this.initializeGameRoom();
   }
 
   setGameState(state: GameState) {
@@ -81,9 +91,9 @@ export class GameStore {
     });
   }
 
-  initializeGameRoom(gameSlug: string) {
+  initializeGameRoom() {
     const supabase = createClient();
-    this.gameRoom = supabase.channel(gameSlug, {
+    this.gameRoom = supabase.channel(this.gameCode, {
       config: { broadcast: { self: true } },
     });
     this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {

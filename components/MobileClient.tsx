@@ -17,9 +17,10 @@ const GameStoreContext = createContext<GameStore | null>(null);
 
 const GameStoreProvider: React.FC<{
   children: React.ReactNode;
-  gameSlug: string;
-}> = ({ children, gameSlug }) => {
-  const store = new GameStore(gameSlug);
+  gameCode: string;
+  currentPlayerId: number;
+}> = ({ children, gameCode, currentPlayerId }) => {
+  const store = new GameStore({ gameCode, currentPlayerId });
   return (
     <GameStoreContext.Provider value={store}>
       {children}
@@ -69,7 +70,10 @@ const MobileClientInner = observer(
 
 export function MobileClient(props: GameProps & { player: Tables<"player"> }) {
   return (
-    <GameStoreProvider gameSlug={props.gameSlug}>
+    <GameStoreProvider
+      currentPlayerId={props.currentPlayerId}
+      gameCode={props.gameSlug}
+    >
       <MobileClientInner {...props} />
     </GameStoreProvider>
   );

@@ -12,8 +12,14 @@ import { ShareThisCode } from "./ShareThisCode";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
-const GameStoreProvider = ({ children }: { children: React.ReactNode }) => {
-  const [gameStore] = useState(() => new GameStore());
+const GameStoreProvider = ({
+  children,
+  gameCode,
+}: {
+  children: React.ReactNode;
+  gameCode: string;
+}) => {
+  const [gameStore] = useState(() => new GameStore({ gameCode }));
   return (
     <GameStoreContext.Provider value={gameStore}>
       {children}
@@ -31,7 +37,7 @@ const useGameStore = () => {
 
 export const DesktopClient = observer((props: GameProps) => {
   return (
-    <GameStoreProvider>
+    <GameStoreProvider gameCode={props.gameSlug}>
       <DesktopClientInner {...props} />
     </GameStoreProvider>
   );
@@ -41,7 +47,7 @@ const DesktopClientInner = observer((props: GameProps) => {
   const gameStore = useGameStore();
 
   useEffect(() => {
-    gameStore.initializeGameRoom(props.gameSlug);
+    gameStore.initializeGameRoom();
     return () => {
       gameStore.cleanup();
     };
