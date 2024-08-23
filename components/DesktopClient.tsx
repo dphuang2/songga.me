@@ -9,31 +9,59 @@ import { GameState, gameStateSchema } from "@/utils/game-state";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { getTeamsAndPlayersForGame } from "@/utils/supabase/get-teams-and-players-for-game";
 import { MusicIcon } from "./MusicIcon";
+import { makeAutoObservable } from "mobx";
+import { observer } from "mobx-react-lite";
 
-export function DesktopClient(props: GameProps) {
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  const gameRoom = useRef<RealtimeChannel | null>(null);
-  useEffect(() => {
+class GameStore {
+  gameState: GameState | null = null;
+  gameRoom: RealtimeChannel | null = null;
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  setGameState(state: GameState) {
+    this.gameState = state;
+  }
+
+  setGameRoom(room: RealtimeChannel) {
+    this.gameRoom = room;
+  }
+
+  initializeGameRoom(gameSlug: string) {
     const supabase = createClient();
-    gameRoom.current = supabase.channel(props.gameSlug, {
+    this.gameRoom = supabase.channel(gameSlug, {
       config: { broadcast: { self: true } },
     });
-    gameRoom.current.on("broadcast", { event: "game" }, ({ payload }) => {
+    this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
       console.log(payload);
-      setGameState(gameStateSchema.parse(payload));
+      this.setGameState(gameStateSchema.parse(payload));
     });
-    gameRoom.current.subscribe();
-    return () => {
-      gameRoom.current?.unsubscribe();
-      gameRoom.current = null;
-    };
-  }, []);
-  return gameState !== null ? (
-    <Game {...props} gameState={gameState} />
-  ) : (
-    <Lobby {...props} gameRoom={gameRoom} />
-  );
+    this.gameRoom.subscribe();
+  }
+
+  cleanup() {
+    this.gameRoom?.unsubscribe();
+    this.gameRoom = null;
+  }
 }
+
+const gameStore = new GameStore();
+
+export const DesktopClient = observer((props: GameProps) => {
+  useEffect(() => {
+    gameStore.initializeGameRoom(props.gameSlug);
+    return () => {
+      gameStore.cleanup();
+    };
+  }, [props.gameSlug]);
+
+  return gameStore.gameState !== null ? (
+    <Game {...props} gameState={gameStore.gameState} />
+  ) : (
+    <Lobby {...props} gameRoom={gameStore.gameRoom} />
+  );
+});
 
 function Game(props: GameProps & { gameState: GameState }) {
   return <Scoreboard />;
@@ -407,7 +435,7 @@ function Lobby({
   isCreator,
   initialPlayerList,
   currentPlayerId,
-}: GameProps & { gameRoom: MutableRefObject<RealtimeChannel | null> }) {
+}: GameProps & { gameRoom: RealtimeChannel | null }) {
   return (
     <main className="container mx-auto py-16 flex justify-center items-center px-4 md:px-0">
       <article className="prose">
@@ -428,7 +456,7 @@ function Lobby({
                 score: {},
                 teams,
               };
-              gameRoom.current?.send({
+              gameRoom?.send({
                 type: "broadcast",
                 event: "game",
                 payload: state,
