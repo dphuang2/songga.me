@@ -10,6 +10,25 @@ export const gameStateSchema = z.object({
       teamId: z.number(),
       score: z.number(),
       picker: z.boolean(),
+      bgColor: z.enum([
+        "bg-red-300",
+        "bg-orange-300",
+        "bg-yellow-300",
+        "bg-green-300",
+        "bg-teal-300",
+        "bg-blue-300",
+        "bg-indigo-300",
+        "bg-purple-300",
+        "bg-pink-300",
+        "bg-rose-300",
+        "bg-cyan-300",
+        "bg-emerald-300",
+        "bg-lime-300",
+        "bg-amber-300",
+        "bg-fuchsia-300",
+        "bg-violet-300",
+        "bg-sky-300",
+      ]),
       guessOrder: z
         .union([z.literal(1), z.literal(2), z.literal(3)])
         .nullable(),
@@ -58,6 +77,25 @@ export class GameStore {
     if (this.gameRoom === null)
       throw Error("Can't start game without connection to game channel");
     getTeamsAndPlayersForGame({ gameId }).then((teams) => {
+      const bgColors = [
+        "bg-red-300",
+        "bg-orange-300",
+        "bg-yellow-300",
+        "bg-green-300",
+        "bg-teal-300",
+        "bg-blue-300",
+        "bg-indigo-300",
+        "bg-purple-300",
+        "bg-pink-300",
+        "bg-rose-300",
+        "bg-cyan-300",
+        "bg-emerald-300",
+        "bg-lime-300",
+        "bg-amber-300",
+        "bg-fuchsia-300",
+        "bg-violet-300",
+        "bg-sky-300",
+      ] as const;
       const state: GameState = {
         teams: teams.map((team) => {
           return {
@@ -67,6 +105,7 @@ export class GameStore {
             guessOrder: null,
             isTyping: false,
             outOfGuesses: false,
+            bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
             players: team.players.map((player) => {
               return {
                 name: player.name,

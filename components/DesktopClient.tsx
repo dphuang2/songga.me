@@ -65,6 +65,26 @@ function Game(props: GameProps) {
 }
 
 const Scoreboard = observer(() => {
+  const bgColors = [
+    "bg-red-300",
+    "bg-orange-300",
+    "bg-yellow-300",
+    "bg-green-300",
+    "bg-teal-300",
+    "bg-blue-300",
+    "bg-indigo-300",
+    "bg-purple-300",
+    "bg-pink-300",
+    "bg-rose-300",
+    "bg-cyan-300",
+    "bg-emerald-300",
+    "bg-lime-300",
+    "bg-amber-300",
+    "bg-fuchsia-300",
+    "bg-violet-300",
+    "bg-sky-300",
+  ] as const;
+
   const teams = [
     {
       name: "A",
@@ -72,20 +92,29 @@ const Scoreboard = observer(() => {
       isTyping: true,
       players: ["Alice"],
       guessOrder: null,
+      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
     },
-    { name: "B", score: 46, guessOrder: 1, players: ["Bob", "Bill"] },
+    {
+      name: "B",
+      score: 46,
+      guessOrder: 1,
+      players: ["Bob", "Bill"],
+      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
+    },
     {
       name: "Solo C-Note",
       score: 38,
       isPicker: true,
       players: ["Charlie"],
       guessOrder: null,
+      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
     },
     {
       name: "Dazzling D&D",
       score: 51,
       guessOrder: 2,
       players: ["David"],
+      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
     },
     {
       name: "E",
@@ -93,10 +122,29 @@ const Scoreboard = observer(() => {
       isTyping: true,
       players: ["Eve"],
       guessOrder: null,
+      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
     },
-    { name: "F", score: 48, players: ["Frank", "Fiona"], guessOrder: null },
-    { name: "G", score: 35, guessOrder: 3, players: ["George"] },
-    { name: "H", score: 53, players: ["Hannah", "Harry"], outOfGuesses: true },
+    {
+      name: "F",
+      score: 48,
+      players: ["Frank", "Fiona"],
+      guessOrder: null,
+      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
+    },
+    {
+      name: "G",
+      score: 35,
+      guessOrder: 3,
+      players: ["George"],
+      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
+    },
+    {
+      name: "H",
+      score: 53,
+      players: ["Hannah", "Harry"],
+      outOfGuesses: true,
+      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
+    },
   ];
 
   // Sort teams by score in descending order
@@ -128,6 +176,7 @@ const Scoreboard = observer(() => {
               name={team.name}
               score={team.score}
               isTyping={team.isTyping}
+              bgColor={team.bgColor}
               isPicker={team.isPicker}
               guessOrder={team.guessOrder}
               players={team.players}
@@ -154,6 +203,7 @@ const TeamScore = observer(
     rank,
     isLeader,
     outOfGuesses,
+    bgColor,
   }: {
     name: string;
     score: number;
@@ -164,14 +214,8 @@ const TeamScore = observer(
     rank: number;
     isLeader: boolean;
     outOfGuesses?: boolean;
+    bgColor: string;
   }) => {
-    const bgColors = [
-      "bg-pink-300",
-      "bg-green-300",
-      "bg-blue-300",
-      "bg-yellow-300",
-    ];
-    const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
     const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
 
     const rankSymbol = (rank: number) => {
