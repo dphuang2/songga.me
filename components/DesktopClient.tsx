@@ -78,21 +78,21 @@ function Scoreboard() {
   const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 sm:p-8 font-sans">
+    <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 sm:p-8 font-sans overflow-auto">
       <div className="relative bg-white border-8 border-black rounded-3xl p-6 w-full max-w-4xl transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
         <div className="absolute -top-8 -left-8 bg-red-500 w-16 h-16 rounded-full border-t-4 border-l-4 border-r-8 border-b-8 border-black flex items-center justify-center">
           <MusicIcon />
         </div>
         <div className="mb-6 border-b-8 border-black pb-4">
           <div className="flex items-center gap-4 mb-4">
-            <h2 className="text-5xl font-black uppercase bg-purple-300 px-4 py-2 rounded-xl border-4 border-black transform -rotate-2">
+            <h2 className="text-4xl sm:text-5xl font-black uppercase bg-purple-300 px-4 py-2 rounded-xl border-4 border-black transform -rotate-2">
               Round
             </h2>
-            <div className="bg-green-400 border-4 border-black w-16 h-16 flex items-center justify-center text-4xl font-black rounded-xl transform rotate-3">
+            <div className="bg-green-400 border-4 border-black w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-3xl sm:text-4xl font-black rounded-xl transform rotate-3">
               1
             </div>
           </div>
-          <div className="bg-blue-400 border-4 border-black px-6 py-3 text-2xl font-black uppercase rounded-xl inline-block transform -rotate-1">
+          <div className="bg-blue-400 border-4 border-black px-4 sm:px-6 py-2 sm:py-3 text-xl sm:text-2xl font-black uppercase rounded-xl inline-block transform -rotate-1">
             Guessing
           </div>
         </div>
@@ -178,7 +178,7 @@ function TeamScore({
 
   return (
     <div
-      className={`${bgColor} border-4 border-black p-4 rounded-xl ${rotation} relative transition-all duration-300
+      className={`${bgColor} border-4 border-black p-3 sm:p-4 rounded-xl ${rotation} relative transition-all duration-300
         ${isTyping ? "scale-105 shadow-lg" : ""}
         ${
           guessOrder
@@ -194,64 +194,70 @@ function TeamScore({
         ${outOfGuesses ? "opacity-40" : ""}`}
     >
       {isPicker && (
-        <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-3 py-1 rounded-full border-4 border-black font-bold text-sm shadow-lg">
+        <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
           Current Picker
         </div>
       )}
-      <h3 className="text-2xl font-black mb-2 uppercase flex items-center flex-wrap">
+      <h3 className="text-xl sm:text-2xl font-black mb-2 uppercase flex items-center flex-wrap">
         <span className="break-words mr-2">{name}</span>
         {rankInfo && (
           <span
-            className={`mt-1 ${rankInfo.bg} rounded-full w-8 h-8 flex items-center justify-center border-2 border-black flex-shrink-0`}
+            className={`mt-1 ${rankInfo.bg} rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border-2 border-black flex-shrink-0`}
           >
-            <span className="text-2xl">{rankInfo.emoji}</span>
+            <span className="text-xl sm:text-2xl">{rankInfo.emoji}</span>
           </span>
         )}
       </h3>
       <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
-        <div className="text-xl font-black">Score</div>
-        <div className="text-3xl font-black">{score}</div>
+        <div className="text-lg sm:text-xl font-black">Score</div>
+        <div className="text-2xl sm:text-3xl font-black">{score}</div>
       </div>
       <div className="mt-2">
         {players.map((player, index) => (
-          <div key={index} className="text-lg font-bold">
+          <div key={index} className="text-base sm:text-lg font-bold">
             {player}
           </div>
         ))}
       </div>
       {isTyping && (
         <div className="absolute -top-2 -right-2 bg-orange-400 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black animate-shake">
-          <span className="text-sm font-bold">Typing</span>
+          <span className="text-xs sm:text-sm font-bold">Typing</span>
         </div>
       )}
       {guessOrder && (
         <div
-          className={`absolute -top-8 -right-4 rounded-full px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
+          className={`absolute -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
             guessOrder === 1
               ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110 border-b-4 border-r-4 shadow-[0_0_10px_4px_rgba(255,215,0,0.5)]"
               : "bg-gradient-to-r from-yellow-300 to-green-400 border-b-4 border-r-4"
           }`}
         >
           <span
-            className={`text-lg font-bold text-black ${
-              guessOrder === 1 ? "text-xl" : ""
+            className={`text-base sm:text-lg font-bold text-black ${
+              guessOrder === 1 ? "text-lg sm:text-xl" : ""
             }`}
           >
             {getGuessOrderLabel(guessOrder)}
           </span>
-          <span className={`ml-1 ${guessOrder === 1 ? "text-xl" : "text-sm"}`}>
+          <span
+            className={`ml-1 ${
+              guessOrder === 1 ? "text-lg sm:text-xl" : "text-xs sm:text-sm"
+            }`}
+          >
             {guessOrder === 1 ? "🥇" : "🏆"}
           </span>
         </div>
       )}
       {outOfGuesses && (
         <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
-          <span className="text-sm font-bold text-white">Out of Guesses</span>
+          <span className="text-xs sm:text-sm font-bold text-white">
+            Out of Guesses
+          </span>
         </div>
       )}
       {isLeader && (
         <div className="absolute -top-4 -left-4 animate-bounce">
-          <span className="text-4xl">👑</span>
+          <span className="text-3xl sm:text-4xl">👑</span>
         </div>
       )}
     </div>
@@ -270,9 +276,9 @@ function FunFact() {
   }, []);
 
   return (
-    <div className="mt-6 bg-purple-200 border-4 border-black p-4 rounded-xl transform -rotate-1">
-      <h3 className="text-xl font-bold mb-2">Fun Fact!</h3>
-      <p className="text-lg">{fact}</p>
+    <div className="mt-6 bg-purple-200 border-4 border-black p-3 sm:p-4 rounded-xl transform -rotate-1">
+      <h3 className="text-lg sm:text-xl font-bold mb-2">Fun Fact!</h3>
+      <p className="text-base sm:text-lg">{fact}</p>
     </div>
   );
 }
