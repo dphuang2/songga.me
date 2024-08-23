@@ -3,7 +3,7 @@
 import { GameProps } from "@/app/[game]/page";
 import { LiveIndicator } from "./LiveIndicator";
 import LivePlayerList from "./LivePlayerList";
-import { MutableRefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { GameState, gameStateSchema } from "@/utils/game-state";
 import { RealtimeChannel } from "@supabase/supabase-js";
