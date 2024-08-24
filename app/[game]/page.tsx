@@ -27,13 +27,11 @@ export default async function Game({ params }: { params: { game: string } }) {
   const gameId = existingGame.data[0].id;
   const isCreator = await isGameCreator({ gameId });
   const currentPlayerId = (await getUserAndPlayer({ supabase })).player.id;
-  const players = await getTeamsAndPlayersForGame({ gameId });
   return (
     <div>
       {/* TODO: this should be based on isMobile, but I need a way to do development */}
       {true && !isCreator ? (
         <Mobile
-          initialPlayerList={players}
           currentPlayerId={currentPlayerId}
           isCreator={isCreator}
           gameId={gameId}
@@ -42,9 +40,8 @@ export default async function Game({ params }: { params: { game: string } }) {
           isPlayerOnAnyTeam={true}
         />
       ) : (
-        <DesktopClient
+        <Desktop
           gameSlug={params.game}
-          initialPlayerList={players}
           currentPlayerId={currentPlayerId}
           isCreator={isCreator}
           gameId={gameId}
@@ -71,11 +68,11 @@ async function Mobile({
   gameId,
   isCreator,
   currentPlayerId,
-  initialPlayerList,
   gameSlug,
   isPlayerOnAnyTeam,
-}: GameProps) {
+}: Omit<GameProps, "initialPlayerList">) {
   const { player } = await setupUserForGame({ gameId });
+  const players = await getTeamsAndPlayersForGame({ gameId });
   return (
     <MobileClient
       isPlayerOnAnyTeam={isPlayerOnAnyTeam}
@@ -85,7 +82,29 @@ async function Mobile({
       isCreator={isCreator}
       gameId={gameId}
       link={link}
-      initialPlayerList={initialPlayerList}
+      initialPlayerList={players}
+    />
+  );
+}
+
+async function Desktop({
+  link,
+  gameId,
+  isCreator,
+  currentPlayerId,
+  gameSlug,
+  isPlayerOnAnyTeam,
+}: Omit<GameProps, "initialPlayerList">) {
+  const players = await getTeamsAndPlayersForGame({ gameId });
+  return (
+    <DesktopClient
+      isPlayerOnAnyTeam={isPlayerOnAnyTeam}
+      gameSlug={gameSlug}
+      currentPlayerId={currentPlayerId}
+      isCreator={isCreator}
+      gameId={gameId}
+      link={link}
+      initialPlayerList={players}
     />
   );
 }
