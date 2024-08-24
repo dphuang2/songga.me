@@ -58,11 +58,18 @@ const LivePlayerList = ({
             {team.players.map((player, i) => (
               <span key={i} className="inline-flex items-center">
                 {player.playerId === currentPlayerId ? (
-                  <strong className="font-black text-lg bg-yellow-300 px-2 py-1 rounded-md border-2 border-black transform -rotate-1">
-                    {player.name}
-                  </strong>
+                  <div className="relative inline-flex items-center bg-yellow-300 px-3 py-1 rounded-md border-2 border-black border-b-4 border-r-4 transform -rotate-1">
+                    <span className="absolute -left-2 -top-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-black border-b-4 border-r-4 transform -rotate-3">
+                      You
+                    </span>
+                    <strong className="font-black text-lg ml-6">
+                      {player.name}
+                    </strong>
+                  </div>
                 ) : (
-                  <span className="font-bold text-lg">{player.name}</span>
+                  <div className="inline-flex items-center bg-gray-200 px-3 py-1 rounded-md border-2 border-black border-b-4 border-r-4 transform rotate-1">
+                    <span className="font-bold text-lg">{player.name}</span>
+                  </div>
                 )}
                 {isGameCreator && player.playerId !== currentPlayerId && (
                   <button
