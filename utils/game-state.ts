@@ -21,14 +21,9 @@ export const gameStateSchema = z.object({
         "bg-indigo-300",
         "bg-purple-300",
         "bg-pink-300",
-        "bg-rose-300",
-        "bg-cyan-300",
         "bg-emerald-300",
         "bg-lime-300",
-        "bg-amber-300",
         "bg-fuchsia-300",
-        "bg-violet-300",
-        "bg-sky-300",
       ]),
       guessOrder: z
         .union([z.literal(1), z.literal(2), z.literal(3)])
@@ -110,18 +105,14 @@ export class GameStore {
         "bg-indigo-300",
         "bg-purple-300",
         "bg-pink-300",
-        "bg-rose-300",
-        "bg-cyan-300",
         "bg-emerald-300",
         "bg-lime-300",
-        "bg-amber-300",
         "bg-fuchsia-300",
-        "bg-violet-300",
-        "bg-sky-300",
       ] as const;
       const state: GameState = {
         selectedSong: null,
         teams: teams.map((team) => {
+          const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
           return {
             teamId: team.teamId,
             score: 0,
@@ -129,7 +120,7 @@ export class GameStore {
             guessOrder: null,
             isTyping: false,
             outOfGuesses: false,
-            bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
+            bgColor,
             players: team.players.map((player) => {
               return {
                 name: player.name,
