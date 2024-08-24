@@ -33,7 +33,7 @@ export const updateSession = async (request: NextRequest) => {
     }
   );
   // If navigating to a game link, then sign in anonymously if not signed in
-  if (request.url.match(/\/\w+\.\w+\.\w+\/?/)) {
+  if (request.url.match(/\/[A-Za-z]{4}\/?/)) {
     await signInAnonymously({ supabase });
   }
 
