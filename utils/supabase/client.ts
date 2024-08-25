@@ -43,6 +43,7 @@ export class SpotifyAuthStorage {
   }
 
   static getSavedAccessToken(): AccessToken | null {
+    if (window === undefined) return null;
     const accessTokenString = window.localStorage.getItem(
       SpotifyAuthStorage.SPOTIFY_ACCESS_TOKEN_KEY
     );

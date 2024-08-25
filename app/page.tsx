@@ -1,6 +1,5 @@
-import { CreateAGameButton } from "@/components/CreateAGameButton";
 import { JoinGameForm } from "@/components/JoinGameForm";
-import { SignInWithSpotifyButton } from "@/components/SignInWithSpotifyButton";
+import { StartAGame } from "@/components/StartAGame";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function Index() {
@@ -8,7 +7,6 @@ export default async function Index() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   return (
     <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-16 font-sans fixed inset-0 overflow-y-auto">
       <div className="bg-white border-8 border-black rounded-3xl p-4 sm:p-6 w-full max-w-2xl mx-auto transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px] mt-8 sm:mt-12 md:mt-16 lg:mt-20">
@@ -43,16 +41,7 @@ export default async function Index() {
 
         <div className="mb-6 bg-orange-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
           <h2 className="text-2xl font-bold mb-4">Want to start a game?</h2>
-          {user ? (
-            <CreateAGameButton />
-          ) : (
-            <div>
-              <p className="text-lg mb-4">
-                Sign in with Spotify to create a game!
-              </p>
-              <SignInWithSpotifyButton />
-            </div>
-          )}
+          <StartAGame user={user} />
         </div>
 
         <div className="mb-6 bg-blue-300 border-4 border-black p-4 rounded-xl transform rotate-1">
