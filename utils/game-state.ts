@@ -43,6 +43,14 @@ export const gameStateSchema = z.object({
 export type GameState = z.infer<typeof gameStateSchema>;
 
 export class GameStore {
+  /**
+   * the gameState property is the ground truth for state in this client. It is
+   * synced across various devices in the game and lost if all people exit from
+   * the game. Otherwise, at least 1 device will be able to sync the state of
+   * the game with other devices. Whenever a player joins, they are given the
+   * current state of the game from the host. For now, if the host is not
+   * present, the game will break.
+   */
   gameState: GameState | null = null;
   gameRoom: RealtimeChannel | null = null;
   gameCode: string;
@@ -168,15 +176,23 @@ export class GameStore {
     return "Players, start guessing!";
   }
 
+  /**
+   * Connect the client to the game room channel
+   */
   initializeGameRoom() {
     const supabase = createClient();
     this.gameRoom = supabase.channel(this.gameCode, {
       config: { broadcast: { self: true } },
     });
+
+    /**
+     * Whenever somebody sends an update to the state, store it locally
+     */
     this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
       console.log(payload);
       this.setGameState(gameStateSchema.parse(payload));
     });
+
     this.gameRoom.subscribe();
   }
 
