@@ -36,10 +36,12 @@ export class SpotifyAuthStorage {
   static SPOTIFY_ACCESS_TOKEN_KEY = "spotify_access_token";
 
   static saveAccessToken(accessToken: AccessToken) {
-    window.localStorage.setItem(
-      SpotifyAuthStorage.SPOTIFY_ACCESS_TOKEN_KEY,
-      JSON.stringify(accessToken)
-    );
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        SpotifyAuthStorage.SPOTIFY_ACCESS_TOKEN_KEY,
+        JSON.stringify(accessToken)
+      );
+    }
   }
 
   static getSavedAccessToken(): AccessToken | null {
