@@ -82,7 +82,11 @@ export function MobileClient(props: GameProps & { player: Tables<"player"> }) {
 
 const Game = observer(() => {
   const store = useGameStore();
-  return store.isOnPickingTeam() ? <Picker /> : <Guesser hasPicked={false} />;
+  return store.isOnPickingTeam() ? (
+    <Picker />
+  ) : (
+    <Guesser hasPicked={store.isCurrentRoundActive()} />
+  );
 });
 
 const Picker = observer(() => {
@@ -426,7 +430,9 @@ const Lobby = observer(
           </div>
 
           <div className="mb-6 bg-orange-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
-            <h2 className="text-xl font-bold mb-2">Step 2: Form teams of 2</h2>
+            <h2 className="text-xl font-bold mb-2">
+              Step 2: Form teams of 2 (or not)
+            </h2>
             <h3 className="text-lg font-bold mb-2">
               Cool people waiting to play <LiveIndicator />
             </h3>
