@@ -82,7 +82,7 @@ export class GameStore {
     return this.currentPlayerId === undefined;
   }
 
-  sendGuess(song: string) {}
+  sendGuess(type: "song" | "artist", name: string) {}
 
   allScoresAreSame(): boolean {
     if (!this.gameState || this.gameState.teams.length === 0) return true;
