@@ -4,8 +4,17 @@ import { z } from "zod";
 import { createClient } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
 
+export const songSchema = z.object({
+  name: z.string(),
+  artist: z.string(),
+});
+
+export const guessSchema = z.object({
+  song: songSchema,
+});
+
 export const gameStateSchema = z.object({
-  selectedSong: z.string().nullable(),
+  selectedSong: songSchema.nullable(),
   teams: z.array(
     z.object({
       teamId: z.number(),
@@ -72,6 +81,8 @@ export class GameStore {
   isHost(): boolean {
     return this.currentPlayerId === undefined;
   }
+
+  sendGuess(song: string) {}
 
   allScoresAreSame(): boolean {
     if (!this.gameState || this.gameState.teams.length === 0) return true;
@@ -157,9 +168,25 @@ export class GameStore {
     return this.gameRoom !== null;
   }
 
+  isGuessCorect(type: "artist" | "song", guess: string): boolean {
+    if (type === "artist") {
+      if (this.gameState?.selectedSong?.artist === guess) {
+        return true;
+      }
+    } else {
+      if (this.gameState?.selectedSong?.name === guess) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   startRound({ song }: { song: string }) {
     if (this.gameState === null) throw new Error("Game state is null");
-    this.gameState.selectedSong = song;
+    this.gameState.selectedSong = {
+      name: song,
+      artist: song,
+    };
     this.gameRoom?.send({
       type: "broadcast",
       event: "game",
@@ -191,6 +218,11 @@ export class GameStore {
     this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
       console.log(payload);
       this.setGameState(gameStateSchema.parse(payload));
+    });
+
+    this.gameRoom.on("broadcast", { event: "guess" }, ({ payload }) => {
+      console.log(payload);
+      guessSchema.parse(payload);
     });
 
     this.gameRoom.subscribe();

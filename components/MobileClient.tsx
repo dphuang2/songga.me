@@ -98,7 +98,7 @@ const Picker = observer(() => {
     setSearch(query);
     // Simulated search results - replace with actual API call
     const mockResults = query
-      ? [`Song 1 - ${query}`, `Song 2 - ${query}`, `Song 3 - ${query}`]
+      ? [`song 1 - ${query}`, `song 2 - ${query}`, `song 3 - ${query}`]
       : [];
     setResults(mockResults);
   };
@@ -122,6 +122,13 @@ const Picker = observer(() => {
             <p className="text-xl font-bold">You've picked a song!</p>
             <p className="text-2xl font-black mt-2">
               Wait for guessers to guess.
+            </p>
+          </div>
+          <div className="mb-6 bg-blue-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
+            <p className="text-xl font-bold">Selected Song:</p>
+            <p className="text-2xl font-black mt-2">
+              {gameStore.gameState?.selectedSong?.name} -{" "}
+              {gameStore.gameState?.selectedSong?.artist}
             </p>
           </div>
         </div>
@@ -198,11 +205,12 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
   const [songResults, setSongResults] = useState<string[]>([]);
   const [correctArtist, setCorrectArtist] = useState(false);
   const [correctSong, setCorrectSong] = useState(false);
+  const gameState = useGameStore();
 
   const handleSearch = (type: "artist" | "song", query: string) => {
     // Simulated search results - replace with actual API call
     const mockResults = query
-      ? [`${type} 1 - ${query}`, `${type} 2 - ${query}`, `${type} 3 - ${query}`]
+      ? [`song 1 - ${query}`, `song 2 - ${query}`, `song 3 - ${query}`]
       : [];
     if (type === "artist") {
       setArtistResults(mockResults);
@@ -217,8 +225,8 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
       ...prev,
       [type]: Math.max(0, prev[type] - 1),
     }));
-    // Simulate checking if the guess is correct
-    const isCorrect = Math.random() < 0.5; // 50% chance of being correct
+
+    const isCorrect = gameState.isGuessCorect(type, name);
 
     if (isCorrect) {
       if (type === "artist") {
