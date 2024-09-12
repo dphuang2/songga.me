@@ -216,12 +216,12 @@ export class GameStore {
      * Whenever somebody sends an update to the state, store it locally
      */
     this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
-      console.log(payload);
+      console.log("broadcast (game): ", payload);
       this.setGameState(gameStateSchema.parse(payload));
     });
 
     this.gameRoom.on("broadcast", { event: "guess" }, ({ payload }) => {
-      console.log(payload);
+      console.log("broadcast (guess):", payload);
       guessSchema.parse(payload);
     });
 
