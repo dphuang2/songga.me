@@ -22,7 +22,7 @@ const LivePlayerList = ({
   initialPlayerList: Players;
   gameId: number;
   isGameCreator: boolean;
-  currentPlayerId: number;
+  currentPlayerId?: number;
   isPlayerOnAnyTeam: boolean;
 }) => {
   const supabase = createClient();

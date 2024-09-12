@@ -234,6 +234,9 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
       } else {
         setCorrectSong(true);
       }
+
+      // Send the guess to the game state
+      gameState.sendGuess(type, name);
     }
     // Update game state accordingly
     if (type === "artist") {

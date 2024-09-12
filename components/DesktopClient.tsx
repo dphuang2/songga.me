@@ -7,7 +7,7 @@ import { useEffect, useState, createContext, useContext } from "react";
 import { MusicIcon } from "./MusicIcon";
 import { observer } from "mobx-react-lite";
 import { FunFact } from "./FunFact";
-import { GameStore } from "@/utils/game-state";
+import { GameState, GameStore } from "@/utils/game-state";
 import { ShareThisCode } from "./ShareThisCode";
 
 const GameStoreContext = createContext<GameStore | null>(null);
@@ -35,32 +35,36 @@ const useGameStore = () => {
   return store;
 };
 
-export const DesktopClient = observer((props: GameProps) => {
-  return (
-    <GameStoreProvider gameCode={props.gameSlug}>
-      <DesktopClientInner {...props} />
-    </GameStoreProvider>
-  );
-});
+export const DesktopClient = observer(
+  (props: Omit<GameProps, "currentPlayerId">) => {
+    return (
+      <GameStoreProvider gameCode={props.gameSlug}>
+        <DesktopClientInner {...props} />
+      </GameStoreProvider>
+    );
+  }
+);
 
-const DesktopClientInner = observer((props: GameProps) => {
-  const gameStore = useGameStore();
+const DesktopClientInner = observer(
+  (props: Omit<GameProps, "currentPlayerId">) => {
+    const gameStore = useGameStore();
 
-  useEffect(() => {
-    gameStore.initializeGameRoom();
-    return () => {
-      gameStore.cleanup();
-    };
-  }, [props.gameSlug, gameStore]);
+    useEffect(() => {
+      gameStore.initializeGameRoom();
+      return () => {
+        gameStore.cleanup();
+      };
+    }, [props.gameSlug, gameStore]);
 
-  return gameStore.gameState !== null ? (
-    <Scoreboard {...props} />
-  ) : (
-    <Lobby {...props} />
-  );
-});
+    return gameStore.gameState !== null ? (
+      <Scoreboard {...props} />
+    ) : (
+      <Lobby {...props} />
+    );
+  }
+);
 
-const Scoreboard = observer(({}: GameProps) => {
+const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
   const gameStore = useGameStore();
   if (gameStore.gameState === null) return null;
   const teams = gameStore.gameState.teams;
@@ -97,15 +101,9 @@ const Scoreboard = observer(({}: GameProps) => {
           {sortedTeams.map((team, index) => (
             <TeamScore
               key={index}
-              score={team.score}
-              isTyping={team.isTyping}
-              bgColor={team.bgColor}
-              isPicker={team.picker}
-              guessOrder={team.guessOrder}
-              players={team.players.map((player) => player.name)}
+              team={team}
               rank={index + 1}
               isLeader={index === 0 && !gameStore.allScoresAreSame()}
-              outOfGuesses={team.outOfGuesses}
               allScoresAreSame={gameStore.allScoresAreSame()}
             />
           ))}
@@ -118,26 +116,14 @@ const Scoreboard = observer(({}: GameProps) => {
 
 const TeamScore = observer(
   ({
-    score,
-    isTyping,
-    isPicker,
-    guessOrder,
-    players,
     rank,
     isLeader,
-    outOfGuesses,
-    bgColor,
     allScoresAreSame,
+    team,
   }: {
-    score: number;
-    isTyping?: boolean;
-    isPicker?: boolean;
-    guessOrder?: number | null;
-    players: string[];
+    team: GameState["teams"][number];
     rank: number;
     isLeader: boolean;
-    outOfGuesses?: boolean;
-    bgColor: string;
     allScoresAreSame: boolean;
   }) => {
     const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
@@ -173,72 +159,71 @@ const TeamScore = observer(
 
     return (
       <div
-        className={`${bgColor} border-4 border-black p-3 sm:p-4 rounded-xl ${rotation} relative transition-all duration-300
-        ${isTyping ? "scale-105 shadow-lg" : ""}
+        className={`${
+          team.bgColor
+        } border-4 border-black p-3 sm:p-4 rounded-xl ${rotation} relative transition-all duration-300
+        ${team.isTyping ? "scale-105 shadow-lg" : ""}
         ${
-          guessOrder
+          team.guessOrder
             ? "scale-105 shadow-lg ring-4 ring-emerald-500 ring-offset-2"
             : ""
         }
         ${isLeader ? "shadow-[0_0_20px_5px_rgba(255,215,0,0.7)]" : ""}
         ${
-          isPicker
+          team.picker
             ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-yellow-400"
             : ""
         }
-        ${outOfGuesses ? "opacity-40" : ""}`}
+        ${team.outOfGuesses ? "opacity-40" : ""}`}
       >
-        {isPicker && (
+        {team.picker && (
           <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
             Current Picker
           </div>
         )}
-        {/* <h3 className="text-xl sm:text-2xl font-black mb-2 uppercase relative">
-          <div className="flex items-center justify-between">
-            <span className="break-words pr-8">{name}</span>
-          </div>
-        </h3> */}
         <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
           <div className="text-lg sm:text-xl font-black">Score</div>
-          <div className="text-2xl sm:text-3xl font-black">{score}</div>
+          <div className="text-2xl sm:text-3xl font-black">{team.score}</div>
         </div>
         <div className="mt-2">
-          {players.map((player, index) => (
+          {team.players.map((player, index) => (
             <div key={index} className="text-base sm:text-lg font-bold">
-              {player}
+              {player.name}
             </div>
           ))}
         </div>
-        {isTyping && (
+        {team.isTyping && (
           <div className="absolute -top-2 -right-2 bg-orange-400 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black animate-shake">
             <span className="text-xs sm:text-sm font-bold">Typing</span>
           </div>
         )}
-        {guessOrder && (
+        {team.guessOrder && (
           <div
             className={`absolute -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
-              guessOrder === 1
+              team.guessOrder === 1
                 ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110 border-b-4 border-r-4 shadow-[0_0_10px_4px_rgba(255,215,0,0.5)]"
                 : "bg-gradient-to-r from-yellow-300 to-green-400 border-b-4 border-r-4"
             }`}
           >
             <span
               className={`text-base sm:text-lg font-bold text-black ${
-                guessOrder === 1 ? "text-lg sm:text-xl" : ""
+                team.guessOrder === 1 ? "text-lg sm:text-xl" : ""
               }`}
             >
-              {getGuessOrderLabel(guessOrder)}
+              {getGuessOrderLabel(team.guessOrder)}
             </span>
             <span
               className={`ml-1 ${
-                guessOrder === 1 ? "text-lg sm:text-xl" : "text-xs sm:text-sm"
+                team.guessOrder === 1
+                  ? "text-lg sm:text-xl"
+                  : "text-xs sm:text-sm"
               }`}
             >
-              {guessOrder === 1 ? "🥇" : "🏆"}
+              {team.guessOrder === 1 ? "🥇" : "🏆"}
             </span>
           </div>
         )}
-        {outOfGuesses && (
+        {team.outOfGuesses && (
           <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
             <span className="text-xs sm:text-sm font-bold text-white">
               Out of Guesses
@@ -267,11 +252,10 @@ const Lobby = observer(
     link,
     gameId,
     isCreator,
-    currentPlayerId,
     initialPlayerList,
     isPlayerOnAnyTeam,
     gameSlug,
-  }: GameProps) => {
+  }: Omit<GameProps, "currentPlayerId">) => {
     const gameStore = useGameStore();
 
     return (
@@ -304,7 +288,6 @@ const Lobby = observer(
               isGameCreator={isCreator}
               gameId={gameId}
               initialPlayerList={initialPlayerList}
-              currentPlayerId={currentPlayerId}
             />
           </div>
 

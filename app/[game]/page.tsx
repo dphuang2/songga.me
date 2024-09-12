@@ -42,7 +42,6 @@ export default async function Game({ params }: { params: { game: string } }) {
       ) : (
         <Desktop
           gameSlug={params.game}
-          currentPlayerId={currentPlayerId}
           isCreator={isCreator}
           gameId={gameId}
           link={link}
@@ -91,16 +90,14 @@ async function Desktop({
   link,
   gameId,
   isCreator,
-  currentPlayerId,
   gameSlug,
   isPlayerOnAnyTeam,
-}: Omit<GameProps, "initialPlayerList">) {
+}: Omit<GameProps, "initialPlayerList" | "currentPlayerId">) {
   const players = await getTeamsAndPlayersForGame({ gameId });
   return (
     <DesktopClient
       isPlayerOnAnyTeam={isPlayerOnAnyTeam}
       gameSlug={gameSlug}
-      currentPlayerId={currentPlayerId}
       isCreator={isCreator}
       gameId={gameId}
       link={link}

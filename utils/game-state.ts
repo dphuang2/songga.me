@@ -10,7 +10,9 @@ export const songSchema = z.object({
 });
 
 export const guessSchema = z.object({
-  song: songSchema,
+  type: z.enum(["song", "artist"]),
+  value: z.string(),
+  teamId: z.number(),
 });
 
 export const gameStateSchema = z.object({
@@ -49,6 +51,11 @@ export const gameStateSchema = z.object({
   ),
 });
 
+export const gameStatePayloadSchema = z.object({
+  state: gameStateSchema,
+  sender: z.enum(["host", "player"]),
+});
+
 export type GameState = z.infer<typeof gameStateSchema>;
 
 export class GameStore {
@@ -82,7 +89,34 @@ export class GameStore {
     return this.currentPlayerId === undefined;
   }
 
-  sendGuess(type: "song" | "artist", name: string) {}
+  sendGuess(type: "song" | "artist", name: string) {
+    if (this.gameRoom === null) {
+      throw new Error("Can't send guess without connection to game channel");
+    }
+    const teamId = this.getTeamIdForCurrentPlayer();
+    const guess = guessSchema.parse({ type, value: name, teamId });
+    this.gameRoom.send({
+      type: "broadcast",
+      event: "guess",
+      payload: guess,
+    });
+  }
+
+  getTeamIdForCurrentPlayer(): number {
+    if (!this.gameState || this.currentPlayerId === undefined) {
+      throw new Error("Game state or current player ID is not set");
+    }
+
+    for (const team of this.gameState.teams) {
+      if (
+        team.players.some((player) => player.playerId === this.currentPlayerId)
+      ) {
+        return team.teamId;
+      }
+    }
+
+    throw new Error("Current player not found in any team");
+  }
 
   allScoresAreSame(): boolean {
     if (!this.gameState || this.gameState.teams.length === 0) return true;
@@ -156,11 +190,24 @@ export class GameStore {
 
       // Set the game state
       this.setGameState(state);
-      this.gameRoom?.send({
-        type: "broadcast",
-        event: "game",
-        payload: state,
-      });
+      this.broadcastGameState(state);
+    });
+  }
+
+  broadcastGameState(gameState: GameState) {
+    if (gameState === null) {
+      throw new Error("Game state is null");
+    }
+
+    const payload: z.infer<typeof gameStatePayloadSchema> = {
+      state: gameState,
+      sender: this.isHost() ? "host" : "player",
+    };
+
+    this.gameRoom?.send({
+      type: "broadcast",
+      event: "game",
+      payload: payload,
     });
   }
 
@@ -187,11 +234,7 @@ export class GameStore {
       name: song,
       artist: song,
     };
-    this.gameRoom?.send({
-      type: "broadcast",
-      event: "game",
-      payload: this.gameState,
-    });
+    this.broadcastGameState(this.gameState);
   }
 
   isCurrentRoundActive(): boolean {
@@ -217,15 +260,77 @@ export class GameStore {
      */
     this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
       console.log("broadcast (game): ", payload);
-      this.setGameState(gameStateSchema.parse(payload));
+      this.setGameState(gameStatePayloadSchema.parse(payload).state);
     });
 
     this.gameRoom.on("broadcast", { event: "guess" }, ({ payload }) => {
       console.log("broadcast (guess):", payload);
       guessSchema.parse(payload);
+
+      if (this.isHost()) {
+        const guess = guessSchema.parse(payload);
+
+        // Find the next available guessOrder
+        const nextGuessOrder = [1, 2, 3].find(
+          (order) =>
+            !this.gameState!.teams.some((team) => team.guessOrder === order)
+        ) as 1 | 2 | 3 | undefined;
+
+        if (nextGuessOrder) {
+          // Update the team's guessOrder and score
+          let updatedTeams = this.gameState!.teams.map((team) => {
+            if (team.teamId === guess.teamId) {
+              let pointsAwarded;
+              switch (nextGuessOrder) {
+                case 1:
+                  pointsAwarded = 5;
+                  break;
+                case 2:
+                  pointsAwarded = 3;
+                  break;
+                case 3:
+                  pointsAwarded = 2;
+                  break;
+                default:
+                  pointsAwarded = 0;
+              }
+              return {
+                ...team,
+                guessOrder: nextGuessOrder,
+                score: team.score + pointsAwarded, // 5 points for 1st, 3 for 2nd, 2 for 3rd
+              };
+            }
+            return team;
+          });
+
+          // If this is the first guess, award the picker 2 points
+          if (nextGuessOrder === 1) {
+            updatedTeams = updatedTeams.map((team) => {
+              if (team.picker) {
+                return {
+                  ...team,
+                  score: team.score + 2, // 2 points for picking a guessable song
+                };
+              }
+              return team;
+            });
+          }
+
+          // Use updateTeams method to update and broadcast the changes
+          this.updateTeams(updatedTeams);
+        }
+      }
     });
 
     this.gameRoom.subscribe();
+  }
+
+  updateTeams(updatedTeams: GameState["teams"]) {
+    if (!this.gameState) {
+      throw new Error("Game state is not initialized");
+    }
+
+    this.gameState.teams = updatedTeams;
   }
 
   cleanup() {
