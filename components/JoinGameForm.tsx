@@ -5,6 +5,7 @@ import { useState } from "react";
 
 export function JoinGameForm() {
   const [gameCode, setGameCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
   const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -14,6 +15,7 @@ export function JoinGameForm() {
 
   const handleJoinGame = () => {
     if (gameCode.length === 4) {
+      setIsJoining(true);
       router.push(`/${gameCode}`);
     }
   };
@@ -24,7 +26,7 @@ export function JoinGameForm() {
     }
   };
 
-  const isButtonDisabled = gameCode.length !== 4;
+  const isButtonDisabled = gameCode.length !== 4 || isJoining;
 
   return (
     <>
@@ -37,6 +39,7 @@ export function JoinGameForm() {
           value={gameCode}
           onChange={handleInputChange}
           onKeyUp={handleKeyPress}
+          disabled={isJoining}
         />
       </div>
       <button
@@ -48,7 +51,7 @@ export function JoinGameForm() {
         disabled={isButtonDisabled}
         onClick={handleJoinGame}
       >
-        Join Game
+        {isJoining ? "Joining Game..." : "Join Game"}
       </button>
     </>
   );
