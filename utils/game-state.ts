@@ -4,6 +4,10 @@ import { z } from "zod";
 import { createClient } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
 
+const GUESS_EVENT = "guess";
+const IS_TYPING_EVENT = "is-typing";
+const GAME_EVENT = "game";
+
 export const songSchema = z.object({
   name: z.string(),
   artist: z.string(),
@@ -14,6 +18,11 @@ export const guessSchema = z.object({
   value: z.string(),
   teamId: z.number(),
   lastGuess: z.boolean(),
+});
+
+export const isTypingSchema = z.object({
+  teamId: z.number(),
+  isTyping: z.boolean(),
 });
 
 export const gameStateSchema = z.object({
@@ -111,8 +120,22 @@ export class GameStore {
     });
     this.gameRoom.send({
       type: "broadcast",
-      event: "guess",
+      event: GUESS_EVENT,
       payload: guess,
+    });
+  }
+
+  sendIsTyping(isTyping: boolean) {
+    if (this.gameRoom === null) {
+      throw new Error("Can't send guess without connection to game channel");
+    }
+    this.gameRoom.send({
+      type: "broadcast",
+      event: IS_TYPING_EVENT,
+      payload: isTypingSchema.parse({
+        teamId: this.getTeamIdForCurrentPlayer(),
+        isTyping,
+      }),
     });
   }
 
@@ -220,7 +243,8 @@ export class GameStore {
 
     this.gameRoom?.send({
       type: "broadcast",
-      event: "game",
+      event: GAME_EVENT,
+
       payload: payload,
     });
   }
@@ -272,12 +296,18 @@ export class GameStore {
     /**
      * Whenever somebody sends an update to the state, store it locally
      */
-    this.gameRoom.on("broadcast", { event: "game" }, ({ payload }) => {
+    this.gameRoom.on("broadcast", { event: GAME_EVENT }, ({ payload }) => {
       console.log("broadcast (game): ", payload);
       this.setGameState(gameStatePayloadSchema.parse(payload).state);
     });
 
-    this.gameRoom.on("broadcast", { event: "guess" }, ({ payload }) => {
+    this.gameRoom.on(
+      "broadcast",
+      { event: IS_TYPING_EVENT },
+      ({ payload }) => {}
+    );
+
+    this.gameRoom.on("broadcast", { event: GUESS_EVENT }, ({ payload }) => {
       console.log("broadcast (guess):", payload);
       guessSchema.parse(payload);
 
