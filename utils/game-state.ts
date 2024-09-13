@@ -276,10 +276,16 @@ export class GameStore {
             !this.gameState!.teams.some((team) => team.guessOrder === order)
         ) as 1 | 2 | 3 | undefined;
 
-        if (nextGuessOrder) {
-          // Update the team's guessOrder and score
-          let updatedTeams = this.gameState!.teams.map((team) => {
-            if (team.teamId === guess.teamId) {
+        let updatedTeams = this.gameState!.teams.map((team) => {
+          if (team.teamId === guess.teamId) {
+            if (team.guessOrder !== null) {
+              // Second correct guess, award 2 points
+              return {
+                ...team,
+                score: team.score + 2,
+              };
+            } else if (nextGuessOrder) {
+              // First correct guess for this team
               let pointsAwarded;
               switch (nextGuessOrder) {
                 case 1:
@@ -297,28 +303,29 @@ export class GameStore {
               return {
                 ...team,
                 guessOrder: nextGuessOrder,
-                score: team.score + pointsAwarded, // 5 points for 1st, 3 for 2nd, 2 for 3rd
+                score: team.score + pointsAwarded,
+              };
+            }
+          }
+          return team;
+        });
+
+        // If this is the first guess overall, award the picker 2 points
+        if (nextGuessOrder === 1) {
+          console.log("First guess made. Awarding 2 points to the picker.");
+          updatedTeams = updatedTeams.map((team) => {
+            if (team.picker) {
+              return {
+                ...team,
+                score: team.score + 2,
               };
             }
             return team;
           });
-
-          // If this is the first guess, award the picker 2 points
-          if (nextGuessOrder === 1) {
-            updatedTeams = updatedTeams.map((team) => {
-              if (team.picker) {
-                return {
-                  ...team,
-                  score: team.score + 2, // 2 points for picking a guessable song
-                };
-              }
-              return team;
-            });
-          }
-
-          // Use updateTeams method to update and broadcast the changes
-          this.updateTeams(updatedTeams);
         }
+
+        // Use updateTeams method to update and broadcast the changes
+        this.updateTeams(updatedTeams);
       }
     });
 
