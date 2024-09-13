@@ -226,6 +226,7 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
       [type]: Math.max(0, guessesLeft[type] - 1),
     };
     setGuessesLeft(newGuessesLeft);
+    gameState.sendIsTyping(false);
 
     const isCorrect = gameState.isGuessCorrect(type, name);
 
@@ -391,6 +392,7 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
+                    gameState.sendIsTyping(true);
                     handleSearch(type as "artist" | "song", e.target.value);
                   }}
                   onFocus={() => handleFocus(type as "artist" | "song")}

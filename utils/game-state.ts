@@ -301,11 +301,18 @@ export class GameStore {
       this.setGameState(gameStatePayloadSchema.parse(payload).state);
     });
 
-    this.gameRoom.on(
-      "broadcast",
-      { event: IS_TYPING_EVENT },
-      ({ payload }) => {}
-    );
+    this.gameRoom.on("broadcast", { event: IS_TYPING_EVENT }, ({ payload }) => {
+      console.log("broadcast (is-typing):", payload);
+      const parsedPayload = isTypingSchema.parse(payload);
+      if (this.isHost() && this.gameState) {
+        const updatedTeams = this.gameState.teams.map((team) =>
+          team.teamId === parsedPayload.teamId && team.guessOrder === null
+            ? { ...team, isTyping: parsedPayload.isTyping }
+            : team
+        );
+        this.updateTeams(updatedTeams);
+      }
+    });
 
     this.gameRoom.on("broadcast", { event: GUESS_EVENT }, ({ payload }) => {
       console.log("broadcast (guess):", payload);
