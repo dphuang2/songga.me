@@ -210,16 +210,7 @@ const TeamScore = observer(
                 team.guessOrder === 1 ? "text-lg sm:text-xl" : ""
               }`}
             >
-              {getGuessOrderLabel(team.guessOrder)}
-            </span>
-            <span
-              className={`ml-1 ${
-                team.guessOrder === 1
-                  ? "text-lg sm:text-xl"
-                  : "text-xs sm:text-sm"
-              }`}
-            >
-              {team.guessOrder === 1 ? "🥇" : "🏆"}
+              {getGuessOrderLabel(team.guessOrder)} Correct
             </span>
           </div>
         )}

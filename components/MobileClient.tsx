@@ -221,12 +221,13 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
 
   const handleGuess = (type: "artist" | "song", name: string) => {
     console.log(`Guessed ${type}: ${name}`);
-    setGuessesLeft((prev) => ({
-      ...prev,
-      [type]: Math.max(0, prev[type] - 1),
-    }));
+    const newGuessesLeft = {
+      ...guessesLeft,
+      [type]: Math.max(0, guessesLeft[type] - 1),
+    };
+    setGuessesLeft(newGuessesLeft);
 
-    const isCorrect = gameState.isGuessCorect(type, name);
+    const isCorrect = gameState.isGuessCorrect(type, name);
 
     if (isCorrect) {
       if (type === "artist") {
@@ -234,10 +235,13 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
       } else {
         setCorrectSong(true);
       }
-
-      // Send the guess to the game state
-      gameState.sendGuess(type, name);
     }
+
+    const lastGuess = newGuessesLeft.artist === 0 && newGuessesLeft.song === 0;
+
+    // Send the guess to the game state
+    gameState.sendGuess({ type, name, lastGuess });
+
     // Update game state accordingly
     if (type === "artist") {
       setArtistSearch(name);
