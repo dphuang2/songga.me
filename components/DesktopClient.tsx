@@ -84,7 +84,7 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
               Round
             </h2>
             <div className="bg-green-400 border-4 border-black w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-3xl sm:text-4xl font-black rounded-xl transform rotate-3">
-              1
+              {gameStore.gameState.round}
             </div>
           </div>
           <div className="bg-blue-400 border-4 border-black px-4 sm:px-6 py-2 sm:py-3 text-xl sm:text-2xl font-black uppercase rounded-xl inline-block transform -rotate-1 relative">
@@ -105,6 +105,7 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
               rank={index + 1}
               isLeader={index === 0 && !gameStore.allScoresAreSame()}
               allScoresAreSame={gameStore.allScoresAreSame()}
+              picker={gameStore.isTeamPicker(team.teamId)}
             />
           ))}
         </div>
@@ -119,11 +120,13 @@ const TeamScore = observer(
     rank,
     isLeader,
     allScoresAreSame,
+    picker,
     team,
   }: {
     team: GameState["teams"][number];
     rank: number;
     isLeader: boolean;
+    picker: boolean;
     allScoresAreSame: boolean;
   }) => {
     const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
@@ -170,13 +173,13 @@ const TeamScore = observer(
         }
         ${isLeader ? "shadow-[0_0_20px_5px_rgba(255,215,0,0.7)]" : ""}
         ${
-          team.picker
+          picker
             ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-yellow-400"
             : ""
         }
         ${team.outOfGuesses ? "opacity-40" : ""}`}
       >
-        {team.picker && (
+        {picker && (
           <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
             Current Picker
           </div>

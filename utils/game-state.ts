@@ -1,5 +1,5 @@
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 import { z } from "zod";
 import { createClient } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
@@ -27,11 +27,12 @@ export const isTypingSchema = z.object({
 
 export const gameStateSchema = z.object({
   selectedSong: songSchema.nullable(),
+  round: z.number(),
+  pickerIndex: z.number(),
   teams: z.array(
     z.object({
       teamId: z.number(),
       score: z.number(),
-      picker: z.boolean(),
       bgColor: z.enum([
         "bg-red-300",
         "bg-orange-300",
@@ -81,6 +82,7 @@ export class GameStore {
   gameRoom: RealtimeChannel | null = null;
   gameCode: string;
   currentPlayerId: number | undefined;
+  countdown: number | null = null;
 
   constructor({
     gameCode,
@@ -97,6 +99,32 @@ export class GameStore {
 
   isHost(): boolean {
     return this.currentPlayerId === undefined;
+  }
+
+  allNonPickerTeams(): GameState["teams"] {
+    if (!this.gameState) return [];
+    return this.gameState.teams.filter(
+      (_, index) => index !== this.gameState?.pickerIndex
+    );
+  }
+
+  isRoundOver(): boolean {
+    if (!this.gameState) return false;
+
+    const nonPickerTeams = this.allNonPickerTeams();
+    const teamsWithGuesses = nonPickerTeams.filter(
+      (team) => team.guessOrder !== null
+    );
+    const teamsOutOfGuesses = nonPickerTeams.filter(
+      (team) => team.outOfGuesses
+    );
+    const minRequiredGuesses = Math.min(nonPickerTeams.length, 3);
+
+    return (
+      teamsWithGuesses.length >= minRequiredGuesses ||
+      teamsWithGuesses.length + teamsOutOfGuesses.length ===
+        nonPickerTeams.length
+    );
   }
 
   sendGuess({
@@ -173,12 +201,80 @@ export class GameStore {
   isOnPickingTeam(): boolean {
     if (!this.gameState || !this.currentPlayerId) return false;
 
-    const pickingTeam = this.gameState.teams.find((team) => team.picker);
+    const pickingTeam = this.pickingTeam();
     if (!pickingTeam) return false;
 
     return pickingTeam.players.some(
       (player) => player.playerId === this.currentPlayerId
     );
+  }
+
+  pickingTeam(): GameState["teams"][number] | undefined {
+    if (!this.gameState) return undefined;
+    return this.gameState.teams[this.gameState.pickerIndex];
+  }
+
+  startCountdown() {
+    console.log("Starting countdown");
+    if (this.isHost() && this.isRoundOver() && this.countdown === null) {
+      console.log("Host is starting the countdown");
+      this.countdown = 10;
+      const countdownInterval = setInterval(() => {
+        if (this.countdown !== null) {
+          this.decrementCount();
+          if (this.countdown <= 0) {
+            console.log("Countdown finished");
+            clearInterval(countdownInterval);
+            this.resetRound();
+            this.broadcastGameState(this.gameState!);
+          }
+        } else {
+          console.log("Countdown was unexpectedly null");
+        }
+      }, 1000);
+    } else {
+      console.log("Conditions not met to start countdown");
+    }
+  }
+
+  resetRound() {
+    console.log("Resetting round");
+    if (this.isHost() && this.gameState) {
+      console.log("Current game state:", JSON.stringify(this.gameState));
+      const updatedTeams = this.gameState.teams.map((team) => ({
+        ...team,
+        guessOrder: null,
+        isTyping: false,
+        outOfGuesses: false,
+      }));
+
+      // Select a new picker
+      const currentPickerIndex = this.gameState.pickerIndex;
+      const newPickerIndex = (currentPickerIndex + 1) % updatedTeams.length;
+      this.gameState.pickerIndex = newPickerIndex;
+      console.log(
+        `New picker selected: Team ${updatedTeams[newPickerIndex].teamId}`
+      );
+
+      this.gameState = {
+        ...this.gameState,
+        selectedSong: null,
+        teams: updatedTeams,
+      };
+      this.countdown = null;
+      console.log("Updated game state:", JSON.stringify(this.gameState));
+    } else {
+      console.log("Cannot reset round: not host or game state is null");
+    }
+  }
+
+  decrementCount() {
+    if (this.countdown !== null) {
+      this.countdown--;
+      console.log(`Countdown: ${this.countdown}`);
+    } else {
+      console.log("Countdown was unexpectedly null");
+    }
   }
 
   startGame({ gameId }: { gameId: number }) {
@@ -199,31 +295,30 @@ export class GameStore {
         "bg-lime-300",
         "bg-fuchsia-300",
       ] as const;
+      const initialTeams = teams.map((team) => {
+        const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+        return {
+          teamId: team.teamId,
+          score: 0,
+          picker: false,
+          guessOrder: null,
+          isTyping: false,
+          outOfGuesses: false,
+          bgColor,
+          players: team.players.map((player) => {
+            return {
+              name: player.name,
+              playerId: player.playerId,
+            };
+          }),
+        };
+      });
       const state: GameState = {
         selectedSong: null,
-        teams: teams.map((team) => {
-          const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
-          return {
-            teamId: team.teamId,
-            score: 0,
-            picker: false,
-            guessOrder: null,
-            isTyping: false,
-            outOfGuesses: false,
-            bgColor,
-            players: team.players.map((player) => {
-              return {
-                name: player.name,
-                playerId: player.playerId,
-              };
-            }),
-          };
-        }),
+        pickerIndex: Math.floor(Math.random() * initialTeams.length),
+        round: 1,
+        teams: initialTeams,
       };
-
-      // Randomly select a team to be the picker
-      const randomIndex = Math.floor(Math.random() * state.teams.length);
-      state.teams[randomIndex].picker = true;
 
       // Set the game state
       this.setGameState(state);
@@ -232,7 +327,10 @@ export class GameStore {
   }
 
   broadcastGameState(gameState: GameState) {
+    console.log("Broadcasting game state:", gameState);
+
     if (gameState === null) {
+      console.error("Attempted to broadcast null game state");
       throw new Error("Game state is null");
     }
 
@@ -241,12 +339,18 @@ export class GameStore {
       sender: this.isHost() ? "host" : "player",
     };
 
-    this.gameRoom?.send({
-      type: "broadcast",
-      event: GAME_EVENT,
+    console.log("Prepared payload:", payload);
 
-      payload: payload,
-    });
+    try {
+      this.gameRoom?.send({
+        type: "broadcast",
+        event: GAME_EVENT,
+        payload: payload,
+      });
+      console.log("Game state broadcasted successfully");
+    } catch (error) {
+      console.error("Error broadcasting game state:", error);
+    }
   }
 
   connectedToGameRoom(): boolean {
@@ -281,7 +385,16 @@ export class GameStore {
 
   currentScoreboardMessage(): string {
     if (!this.isCurrentRoundActive()) return "Picker is choosing a song...";
+    if (this.isRoundOver() && this.countdown !== null) {
+      return `Round over! Next round starting in ${this.countdown} seconds...`;
+    }
     return "Players, start guessing!";
+  }
+
+  isTeamPicker(teamId: number): boolean {
+    if (!this.gameState) return false;
+    const pickingTeam = this.gameState.teams[this.gameState.pickerIndex];
+    return pickingTeam.teamId === teamId;
   }
 
   /**
@@ -292,6 +405,13 @@ export class GameStore {
     this.gameRoom = supabase.channel(this.gameCode, {
       config: { broadcast: { self: true } },
     });
+
+    if (typeof window === "undefined") {
+      console.log("Running in server-side environment");
+      return;
+    } else {
+      console.log("Running in client-side environment");
+    }
 
     /**
      * Whenever somebody sends an update to the state, store it locally
@@ -377,7 +497,7 @@ export class GameStore {
           if (nextGuessOrder === 1) {
             console.log("First guess made. Awarding 2 points to the picker.");
             updatedTeams = updatedTeams.map((team) => {
-              if (team.picker) {
+              if (this.isTeamPicker(team.teamId)) {
                 return {
                   ...team,
                   score: team.score + 2,
@@ -416,6 +536,11 @@ export class GameStore {
               );
             }
           }
+        }
+
+        // After processing the guess, check if the round is over
+        if (this.isRoundOver()) {
+          this.startCountdown();
         }
       }
     });
