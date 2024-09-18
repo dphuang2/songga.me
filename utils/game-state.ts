@@ -407,11 +407,9 @@ export class GameStore {
       config: { broadcast: { self: true } },
     });
 
+    // Avoid SSR subscribing to realtime events and participating as an unexpected client
     if (typeof window === "undefined") {
-      console.log("Running in server-side environment");
       return;
-    } else {
-      console.log("Running in client-side environment");
     }
 
     /**
@@ -546,7 +544,7 @@ export class GameStore {
       }
     });
 
-    this.gameRoom.subscribe();
+    this.gameRoom.subscribe((status) => console.log(status));
   }
 
   updateTeams(updatedTeams: GameState["teams"]) {
