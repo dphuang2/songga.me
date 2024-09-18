@@ -14,7 +14,6 @@ export async function setupUserForGame({
 
   // 2. If user is already on team in this game, then return early
   const doNotCreateTeam = await isPlayerOnAnyTeam({
-    supabase,
     gameId,
     playerId: player.id,
   });
