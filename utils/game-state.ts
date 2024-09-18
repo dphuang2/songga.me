@@ -260,6 +260,7 @@ export class GameStore {
         ...this.gameState,
         selectedSong: null,
         teams: updatedTeams,
+        round: this.gameState.round + 1,
       };
       this.countdown = null;
       console.log("Updated game state:", JSON.stringify(this.gameState));

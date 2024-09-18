@@ -5,7 +5,7 @@ import { LiveIndicator } from "./LiveIndicator";
 import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
 import { Tables } from "@/utils/supabase/database.types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GameStore } from "@/utils/game-state";
 import { MusicIcon } from "./MusicIcon";
 
@@ -206,6 +206,21 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
   const [correctArtist, setCorrectArtist] = useState(false);
   const [correctSong, setCorrectSong] = useState(false);
   const gameState = useGameStore();
+
+  useEffect(() => {
+    // Reset all state when a new round starts
+    const resetState = () => {
+      setGuessesLeft({ artist: 1, song: 1 });
+      setArtistSearch("");
+      setSongSearch("");
+      setArtistResults([]);
+      setSongResults([]);
+      setCorrectArtist(false);
+      setCorrectSong(false);
+    };
+
+    resetState();
+  }, [gameState.gameState?.round]);
 
   const handleSearch = (type: "artist" | "song", query: string) => {
     // Simulated search results - replace with actual API call
