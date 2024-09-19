@@ -52,6 +52,24 @@ const MobileClientInner = observer(
   }) => {
     const store = useGameStore();
 
+    if (store.isNotOnTeam()) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 font-sans">
+          <div className="bg-white border-8 border-black rounded-3xl p-6 w-full max-w-md transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
+            <h2 className="text-3xl font-black uppercase bg-red-400 px-4 py-2 rounded-xl border-4 border-black transform -rotate-2 mb-4">
+              Oops!
+            </h2>
+            <p className="text-xl font-bold mb-4 bg-blue-300 border-4 border-black p-3 rounded-xl transform rotate-1">
+              The game has already started!
+            </p>
+            <p className="text-lg mb-4 bg-green-300 border-4 border-black p-3 rounded-xl transform -rotate-1">
+              You can't join an ongoing game. Please join a new game.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return store.gameState !== null ? (
       <Game />
     ) : (

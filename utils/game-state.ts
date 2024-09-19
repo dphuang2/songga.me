@@ -168,9 +168,21 @@ export class GameStore {
     });
   }
 
+  isNotOnTeam(): boolean {
+    try {
+      this.getTeamIdForCurrentPlayer();
+      return false; // If getTeamIdForCurrentPlayer() succeeds, the player is on a team
+    } catch (error) {
+      // If getTeamIdForCurrentPlayer() throws an error, the player is not on a team
+      return true;
+    }
+  }
+
   getTeamIdForCurrentPlayer(): number {
     if (!this.gameState || this.currentPlayerId === undefined) {
-      throw new Error("Game state or current player ID is not set");
+      throw new Error(
+        `Game state or current player ID (${this.currentPlayerId}) is not set`
+      );
     }
 
     for (const team of this.gameState.teams) {
@@ -181,7 +193,9 @@ export class GameStore {
       }
     }
 
-    throw new Error("Current player not found in any team");
+    throw new Error(
+      `Current player (${this.currentPlayerId}) not found in any team`
+    );
   }
 
   allScoresAreSame(): boolean {
