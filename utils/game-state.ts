@@ -7,6 +7,7 @@ import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-
 const GUESS_EVENT = "guess";
 const IS_TYPING_EVENT = "is-typing";
 const GAME_EVENT = "game";
+const SYNC_EVENT = "sync";
 
 export const songSchema = z.object({
   name: z.string(),
@@ -544,7 +545,22 @@ export class GameStore {
       }
     });
 
-    this.gameRoom.subscribe((status) => console.log(status));
+    this.gameRoom.on("broadcast", { event: SYNC_EVENT }, () => {
+      console.log("Received sync event");
+      if (this.gameState) {
+        this.broadcastGameState(this.gameState);
+      }
+    });
+
+    this.gameRoom.subscribe((status) => {
+      console.log(status);
+      if (status === "SUBSCRIBED") {
+        this.gameRoom?.send({
+          type: "broadcast",
+          event: SYNC_EVENT,
+        });
+      }
+    });
   }
 
   updateTeams(updatedTeams: GameState["teams"]) {
