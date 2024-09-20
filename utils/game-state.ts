@@ -386,6 +386,10 @@ export class GameStore {
     return false;
   }
 
+  isGameStarted(): boolean {
+    return this.gameState !== null;
+  }
+
   startRound({ song }: { song: string }) {
     if (this.gameState === null) throw new Error("Game state is null");
     this.gameState.selectedSong = {
@@ -561,6 +565,7 @@ export class GameStore {
 
     this.gameRoom.on("broadcast", { event: SYNC_EVENT }, () => {
       console.log("Received sync event");
+      console.log("Current game state:", this.gameState);
       if (this.gameState) {
         this.broadcastGameState(this.gameState);
       }

@@ -52,7 +52,7 @@ const MobileClientInner = observer(
   }) => {
     const store = useGameStore();
 
-    if (store.isNotOnTeam()) {
+    if (store.isGameStarted() && store.isNotOnTeam()) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 font-sans">
           <div className="bg-white border-8 border-black rounded-3xl p-6 w-full max-w-md transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
