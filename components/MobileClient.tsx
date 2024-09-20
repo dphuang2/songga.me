@@ -216,25 +216,22 @@ const Picker = observer(() => {
 });
 
 const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
-  const [guessesLeft, setGuessesLeft] = useState({ artist: 1, song: 1 });
   const [artistSearch, setArtistSearch] = useState("");
   const [songSearch, setSongSearch] = useState("");
   const [artistResults, setArtistResults] = useState<string[]>([]);
   const [songResults, setSongResults] = useState<string[]>([]);
-  const [correctArtist, setCorrectArtist] = useState(false);
-  const [correctSong, setCorrectSong] = useState(false);
   const gameState = useGameStore();
 
   useEffect(() => {
     // Reset all state when a new round starts
     const resetState = () => {
-      setGuessesLeft({ artist: 1, song: 1 });
+      gameState.setGuessesLeft({ artist: 1, song: 1 });
+      gameState.setCorrectArtist(false);
+      gameState.setCorrectSong(false);
       setArtistSearch("");
       setSongSearch("");
       setArtistResults([]);
       setSongResults([]);
-      setCorrectArtist(false);
-      setCorrectSong(false);
     };
 
     resetState();
@@ -255,25 +252,25 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
   const handleGuess = (type: "artist" | "song", name: string) => {
     console.log(`Guessed ${type}: ${name}`);
     const newGuessesLeft = {
-      ...guessesLeft,
-      [type]: Math.max(0, guessesLeft[type] - 1),
+      ...gameState.guessesLeft(),
+      [type]: Math.max(0, gameState.guessesLeft()[type] - 1),
     };
-    setGuessesLeft(newGuessesLeft);
+    gameState.setGuessesLeft(newGuessesLeft);
     gameState.sendIsTyping(false);
 
     const isCorrect = gameState.isGuessCorrect(type, name);
 
     if (isCorrect) {
       if (type === "artist") {
-        setCorrectArtist(true);
+        gameState.setCorrectArtist(true);
       } else {
-        setCorrectSong(true);
+        gameState.setCorrectSong(true);
       }
     }
 
     const lastGuess = newGuessesLeft.artist === 0 && newGuessesLeft.song === 0;
 
-    // Send the guess to the game state
+    // Send the guess to the host to allow the host to calculate points and update the scoreboard
     gameState.sendGuess({ type, name, lastGuess });
 
     // Update game state accordingly
@@ -324,18 +321,18 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
             </span>
             <div
               className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center border-4 border-black rounded-xl ${
-                correctArtist
+                gameState.correctArtist()
                   ? "bg-green-400 animate-bounce"
-                  : guessesLeft.artist > 0
+                  : gameState.guessesLeft().artist > 0
                   ? "bg-blue-300"
                   : "bg-gray-300"
               }`}
             >
               <MusicIcon
                 className={`text-3xl sm:text-4xl ${
-                  correctArtist
+                  gameState.correctArtist()
                     ? "text-white "
-                    : guessesLeft.artist > 0
+                    : gameState.guessesLeft().artist > 0
                     ? "text-black"
                     : "text-gray-500"
                 }`}
@@ -343,18 +340,18 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
             </div>
             <div
               className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center border-4 border-black rounded-xl ${
-                correctSong
+                gameState.correctSong()
                   ? "bg-green-400 animate-bounce"
-                  : guessesLeft.song > 0
+                  : gameState.guessesLeft().song > 0
                   ? "bg-blue-300"
                   : "bg-gray-300"
               }`}
             >
               <MusicIcon
                 className={`text-3xl sm:text-4xl ${
-                  correctSong
+                  gameState.correctSong()
                     ? "text-white"
-                    : guessesLeft.song > 0
+                    : gameState.guessesLeft().song > 0
                     ? "text-black"
                     : "text-gray-500"
                 }`}
@@ -363,10 +360,10 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
           </div>
         </div>
 
-        {guessesLeft.artist === 0 &&
-          guessesLeft.song === 0 &&
-          !correctArtist &&
-          !correctSong && (
+        {gameState.guessesLeft().artist === 0 &&
+          gameState.guessesLeft().song === 0 &&
+          !gameState.correctArtist() &&
+          !gameState.correctSong() && (
             <div className="mb-6 bg-red-300 border-4 border-black p-4 rounded-xl transform -rotate-1 animate-shake">
               <p className="text-xl font-bold text-center">No guesses left!</p>
             </div>
@@ -409,16 +406,16 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
                 <input
                   type="text"
                   className={`w-full px-4 py-2 text-lg border-4 rounded-xl focus:outline-none focus:ring-4 ${
-                    (type === "artist" && correctArtist) ||
-                    (type === "song" && correctSong)
+                    (type === "artist" && gameState.correctArtist()) ||
+                    (type === "song" && gameState.correctSong())
                       ? "bg-green-200 border-green-500 text-green-700 font-bold"
-                      : guessesLeft[type] === 0
+                      : gameState.guessesLeft()[type] === 0
                       ? "bg-gray-200 cursor-not-allowed border-black"
                       : "border-black focus:ring-blue-400"
                   }`}
                   placeholder={`${
-                    (type === "artist" && correctArtist) ||
-                    (type === "song" && correctSong)
+                    (type === "artist" && gameState.correctArtist()) ||
+                    (type === "song" && gameState.correctSong())
                       ? `Correct ${type}!`
                       : `Search for ${type}...`
                   }`}
@@ -430,17 +427,19 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
                   }}
                   onFocus={() => handleFocus(type as "artist" | "song")}
                   disabled={
-                    guessesLeft[type] === 0 ||
-                    (type === "artist" ? correctArtist : correctSong)
+                    gameState.guessesLeft()[type] === 0 ||
+                    (type === "artist"
+                      ? gameState.correctArtist()
+                      : gameState.correctSong())
                   }
                 />
-                {((type === "artist" && correctArtist) ||
-                  (type === "song" && correctSong)) && (
+                {((type === "artist" && gameState.correctArtist()) ||
+                  (type === "song" && gameState.correctSong())) && (
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-2xl">
                     ✓
                   </span>
                 )}
-                {results.length > 0 && guessesLeft[type] > 0 && (
+                {results.length > 0 && gameState.guessesLeft()[type] > 0 && (
                   <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
                     <div className="max-h-48 overflow-y-auto">
                       {results.map((result, index) => (

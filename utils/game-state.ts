@@ -53,6 +53,12 @@ export const gameStateSchema = z.object({
         .nullable(),
       isTyping: z.boolean(),
       outOfGuesses: z.boolean(),
+      guessesLeft: z.object({
+        artist: z.number(),
+        song: z.number(),
+      }),
+      correctArtist: z.boolean(),
+      correctSong: z.boolean(),
       players: z.array(
         z.object({
           name: z.string(),
@@ -96,6 +102,48 @@ export class GameStore {
     makeAutoObservable(this);
     this.gameCode = gameCode;
     this.initializeGameRoom();
+  }
+
+  getCurrentTeam(): GameState["teams"][number] | undefined {
+    if (!this.gameState) return undefined;
+    const teamId = this.getTeamIdForCurrentPlayer();
+    return this.gameState.teams.find((team) => team.teamId === teamId);
+  }
+
+  correctArtist(): boolean {
+    const team = this.getCurrentTeam();
+    return team ? team.correctArtist : false;
+  }
+
+  setCorrectArtist(value: boolean): void {
+    const team = this.getCurrentTeam();
+    if (team) {
+      team.correctArtist = value;
+    }
+  }
+
+  correctSong(): boolean {
+    const team = this.getCurrentTeam();
+    return team ? team.correctSong : false;
+  }
+
+  setCorrectSong(value: boolean): void {
+    const team = this.getCurrentTeam();
+    if (team) {
+      team.correctSong = value;
+    }
+  }
+
+  guessesLeft(): { artist: number; song: number } {
+    const team = this.getCurrentTeam();
+    return team ? team.guessesLeft : { artist: 0, song: 0 };
+  }
+
+  setGuessesLeft(guesses: { artist: number; song: number }): void {
+    const team = this.getCurrentTeam();
+    if (team) {
+      team.guessesLeft = guesses;
+    }
   }
 
   isHost(): boolean {
@@ -327,6 +375,12 @@ export class GameStore {
               playerId: player.playerId,
             };
           }),
+          guessesLeft: {
+            artist: 1,
+            song: 1,
+          },
+          correctArtist: false,
+          correctSong: false,
         };
       });
       const state: GameState = {
