@@ -507,11 +507,11 @@ export class GameStore {
 
     this.gameRoom.on("broadcast", { event: GUESS_EVENT }, ({ payload }) => {
       console.log("broadcast (guess):", payload);
-      guessSchema.parse(payload);
+      const guess = guessSchema.parse(payload);
+
+      const teamId = this.getTeamIdForCurrentPlayer();
 
       if (this.isHost()) {
-        const guess = guessSchema.parse(payload);
-
         // Check if the guess is correct
         const isCorrect = this.isGuessCorrect(guess.type, guess.value);
 
@@ -526,6 +526,16 @@ export class GameStore {
           let updatedTeams = this.gameState!.teams.map((team) => {
             if (team.teamId === guess.teamId) {
               console.log(`Matching team found: ${team.teamId}`);
+              // Update correctArtist, correctSong, and guessesLeft using setters
+              console.log(`Updating team ${team.teamId} with guess results:`, {
+                correctArtist: guess.correctArtist,
+                correctSong: guess.correctSong,
+                guessesLeft: guess.guessesLeft,
+              });
+              team.correctArtist = guess.correctArtist;
+              team.correctSong = guess.correctSong;
+              team.guessesLeft = guess.guessesLeft;
+              console.log(`Updated team ${team.teamId}:`, team);
               if (team.guessOrder !== null) {
                 console.log(
                   `Second correct guess for team ${team.teamId}, awarding 2 points`
@@ -559,8 +569,9 @@ export class GameStore {
                   score: team.score + pointsAwarded,
                 };
               }
+            } else {
+              console.log(`No changes for team ${team.teamId}`);
             }
-            console.log(`No changes for team ${team.teamId}`);
             return team;
           });
 
@@ -613,6 +624,16 @@ export class GameStore {
         if (this.isRoundOver()) {
           this.startCountdown();
         }
+      } else if (teamId === guess.teamId) {
+        // Update the team's guess status using setters
+        this.setCorrectArtist(guess.correctArtist);
+        this.setCorrectSong(guess.correctSong);
+        this.setGuessesLeft(guess.guessesLeft);
+
+        console.log(`Updated guess status for team ${guess.teamId}`);
+        console.log(`Correct artist: ${this.correctArtist()}`);
+        console.log(`Correct song: ${this.correctSong()}`);
+        console.log(`Guesses left:`, this.guessesLeft());
       }
     });
 
