@@ -287,8 +287,7 @@ export class GameStore {
           if (this.countdown <= 0) {
             console.log("Countdown finished");
             clearInterval(countdownInterval);
-            this.resetRound();
-            this.broadcastGameState(this.gameState!);
+            this.startNewRound();
           }
         } else {
           console.log("Countdown was unexpectedly null");
@@ -297,6 +296,11 @@ export class GameStore {
     } else {
       console.log("Conditions not met to start countdown");
     }
+  }
+
+  startNewRound() {
+    this.resetRound();
+    this.broadcastGameState(this.gameState!);
   }
 
   resetRound() {

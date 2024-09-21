@@ -74,6 +74,13 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 sm:p-8 font-sans overflow-auto">
+      <button
+        onClick={() => gameStore.startNewRound()}
+        className="fixed top-2 right-2 text-black text-xs px-2 py-1 rounded opacity-30 hover:opacity-100 transition-opacity z-50"
+        title="Force start next round (Debug)"
+      >
+        Next Round
+      </button>
       <div className="relative bg-white border-8 border-black rounded-3xl p-6 w-full max-w-4xl transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
         <div className="absolute -top-8 -left-8 bg-red-500 w-16 h-16 rounded-full border-t-4 border-l-4 border-r-8 border-b-8 border-black flex items-center justify-center">
           <MusicIcon />
