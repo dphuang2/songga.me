@@ -73,6 +73,8 @@ export const gameStateSchema = z.object({
             playerId: z.number(),
           })
         ),
+        artistGuess: z.string().nullable(),
+        songGuess: z.string().nullable(),
       })
       .merge(guessStatusSchema)
   ),
@@ -152,6 +154,30 @@ export class GameStore {
     const team = this.getCurrentTeam();
     if (team) {
       team.guessesLeft = guesses;
+    }
+  }
+
+  artistGuess(): string | null {
+    const team = this.getCurrentTeam();
+    return team ? team.artistGuess : null;
+  }
+
+  setArtistGuess(guess: string): void {
+    const team = this.getCurrentTeam();
+    if (team) {
+      team.artistGuess = guess;
+    }
+  }
+
+  songGuess(): string | null {
+    const team = this.getCurrentTeam();
+    return team ? team.songGuess : null;
+  }
+
+  setSongGuess(guess: string): void {
+    const team = this.getCurrentTeam();
+    if (team) {
+      team.songGuess = guess;
     }
   }
 
@@ -312,6 +338,11 @@ export class GameStore {
         guessOrder: null,
         isTyping: false,
         outOfGuesses: false,
+        artistGuess: null,
+        songGuess: null,
+        correctArtist: false,
+        correctSong: false,
+        guessesLeft: { artist: 1, song: 1 },
       }));
 
       // Select a new picker
@@ -384,6 +415,8 @@ export class GameStore {
           },
           correctArtist: false,
           correctSong: false,
+          artistGuess: null,
+          songGuess: null,
         };
       });
       const state: GameState = {
@@ -631,6 +664,11 @@ export class GameStore {
         this.setCorrectArtist(guess.correctArtist);
         this.setCorrectSong(guess.correctSong);
         this.setGuessesLeft(guess.guessesLeft);
+        if (guess.type === "artist") {
+          this.setArtistGuess(guess.value);
+        } else if (guess.type === "song") {
+          this.setSongGuess(guess.value);
+        }
 
         console.log(`Updated guess status for team ${guess.teamId}`);
         console.log(`Correct artist: ${this.correctArtist()}`);

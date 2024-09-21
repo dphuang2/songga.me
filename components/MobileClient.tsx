@@ -375,13 +375,13 @@ const Guesser = observer(() => {
         {[
           {
             type: "artist" as const,
-            search: artistSearch,
+            search: gameState.artistGuess() ?? artistSearch,
             setSearch: setArtistSearch,
             results: artistResults,
           },
           {
             type: "song" as const,
-            search: songSearch,
+            search: gameState.songGuess() ?? songSearch,
             setSearch: setSongSearch,
             results: songResults,
           },
