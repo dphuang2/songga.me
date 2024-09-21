@@ -271,7 +271,14 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
     const lastGuess = newGuessesLeft.artist === 0 && newGuessesLeft.song === 0;
 
     // Send the guess to the host to allow the host to calculate points and update the scoreboard
-    gameState.sendGuess({ type, name, lastGuess });
+    gameState.sendGuess({
+      type,
+      value: name,
+      lastGuess,
+      guessesLeft: gameState.guessesLeft(),
+      correctArtist: gameState.correctArtist(),
+      correctSong: gameState.correctSong(),
+    });
 
     // Update game state accordingly
     if (type === "artist") {

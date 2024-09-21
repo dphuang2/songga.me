@@ -14,12 +14,25 @@ export const songSchema = z.object({
   artist: z.string(),
 });
 
-export const guessSchema = z.object({
-  type: z.enum(["song", "artist"]),
-  value: z.string(),
-  teamId: z.number(),
-  lastGuess: z.boolean(),
+export const guessStatusSchema = z.object({
+  guessesLeft: z.object({
+    artist: z.number(),
+    song: z.number(),
+  }),
+  correctArtist: z.boolean(),
+  correctSong: z.boolean(),
 });
+
+export const guessSchema = z
+  .object({
+    type: z.enum(["song", "artist"]),
+    value: z.string(),
+    teamId: z.number(),
+    lastGuess: z.boolean(),
+  })
+  .merge(guessStatusSchema);
+
+export type Guess = z.infer<typeof guessSchema>;
 
 export const isTypingSchema = z.object({
   teamId: z.number(),
@@ -31,41 +44,37 @@ export const gameStateSchema = z.object({
   round: z.number(),
   pickerIndex: z.number(),
   teams: z.array(
-    z.object({
-      teamId: z.number(),
-      score: z.number(),
-      bgColor: z.enum([
-        "bg-red-300",
-        "bg-orange-300",
-        "bg-yellow-300",
-        "bg-green-300",
-        "bg-teal-300",
-        "bg-blue-300",
-        "bg-indigo-300",
-        "bg-purple-300",
-        "bg-pink-300",
-        "bg-emerald-300",
-        "bg-lime-300",
-        "bg-fuchsia-300",
-      ]),
-      guessOrder: z
-        .union([z.literal(1), z.literal(2), z.literal(3)])
-        .nullable(),
-      isTyping: z.boolean(),
-      outOfGuesses: z.boolean(),
-      guessesLeft: z.object({
-        artist: z.number(),
-        song: z.number(),
-      }),
-      correctArtist: z.boolean(),
-      correctSong: z.boolean(),
-      players: z.array(
-        z.object({
-          name: z.string(),
-          playerId: z.number(),
-        })
-      ),
-    })
+    z
+      .object({
+        teamId: z.number(),
+        score: z.number(),
+        bgColor: z.enum([
+          "bg-red-300",
+          "bg-orange-300",
+          "bg-yellow-300",
+          "bg-green-300",
+          "bg-teal-300",
+          "bg-blue-300",
+          "bg-indigo-300",
+          "bg-purple-300",
+          "bg-pink-300",
+          "bg-emerald-300",
+          "bg-lime-300",
+          "bg-fuchsia-300",
+        ]),
+        guessOrder: z
+          .union([z.literal(1), z.literal(2), z.literal(3)])
+          .nullable(),
+        isTyping: z.boolean(),
+        outOfGuesses: z.boolean(),
+        players: z.array(
+          z.object({
+            name: z.string(),
+            playerId: z.number(),
+          })
+        ),
+      })
+      .merge(guessStatusSchema)
   ),
 });
 
@@ -176,24 +185,14 @@ export class GameStore {
     );
   }
 
-  sendGuess({
-    type,
-    name,
-    lastGuess,
-  }: {
-    type: "song" | "artist";
-    name: string;
-    lastGuess: boolean;
-  }) {
+  sendGuess(input: Omit<Guess, "teamId">) {
     if (this.gameRoom === null) {
       throw new Error("Can't send guess without connection to game channel");
     }
     const teamId = this.getTeamIdForCurrentPlayer();
     const guess = guessSchema.parse({
-      type,
-      value: name,
+      ...input,
       teamId,
-      lastGuess: !!lastGuess,
     });
     this.gameRoom.send({
       type: "broadcast",
