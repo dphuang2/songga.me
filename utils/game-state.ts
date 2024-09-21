@@ -509,8 +509,6 @@ export class GameStore {
       console.log("broadcast (guess):", payload);
       const guess = guessSchema.parse(payload);
 
-      const teamId = this.getTeamIdForCurrentPlayer();
-
       if (this.isHost()) {
         // Check if the guess is correct
         const isCorrect = this.isGuessCorrect(guess.type, guess.value);
@@ -624,7 +622,7 @@ export class GameStore {
         if (this.isRoundOver()) {
           this.startCountdown();
         }
-      } else if (teamId === guess.teamId) {
+      } else if (this.getTeamIdForCurrentPlayer() === guess.teamId) {
         // Update the team's guess status using setters
         this.setCorrectArtist(guess.correctArtist);
         this.setCorrectSong(guess.correctSong);
