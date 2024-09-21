@@ -100,11 +100,7 @@ export function MobileClient(props: GameProps & { player: Tables<"player"> }) {
 
 const Game = observer(() => {
   const store = useGameStore();
-  return store.isOnPickingTeam() ? (
-    <Picker />
-  ) : (
-    <Guesser hasPicked={store.isCurrentRoundActive()} />
-  );
+  return store.isOnPickingTeam() ? <Picker /> : <Guesser />;
 });
 
 const Picker = observer(() => {
@@ -215,7 +211,7 @@ const Picker = observer(() => {
   );
 });
 
-const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
+const Guesser = observer(() => {
   const [artistSearch, setArtistSearch] = useState("");
   const [songSearch, setSongSearch] = useState("");
   const [artistResults, setArtistResults] = useState<string[]>([]);
@@ -298,7 +294,7 @@ const Guesser = observer(({ hasPicked }: { hasPicked: boolean }) => {
     }
   };
 
-  if (!hasPicked) {
+  if (!gameState.isCurrentRoundActive()) {
     return (
       <div className="flex flex-col justify-start min-h-screen bg-yellow-400 p-4 pb-16 font-sans fixed inset-0 overflow-y-auto">
         <div className="bg-white border-8 border-black rounded-3xl p-4 sm:p-6 w-full max-w-md mx-auto transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px] mt-8 sm:mt-12 md:mt-16 lg:mt-20">
