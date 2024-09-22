@@ -1,8 +1,9 @@
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { makeAutoObservable, runInAction } from "mobx";
 import { z } from "zod";
-import { createClient } from "./supabase/client";
+import { createClient, SpotifyAuthStorage } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
+import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 
 const GUESS_EVENT = "guess";
 const IS_TYPING_EVENT = "is-typing";
@@ -39,9 +40,19 @@ export const isTypingSchema = z.object({
   isTyping: z.boolean(),
 });
 
+const spotifyAccessTokenSchema = z.object({
+  access_token: z.string(),
+  token_type: z.string(),
+  expires_in: z.number(),
+  refresh_token: z.string(),
+});
+
+export type SpotifyAccessToken = z.infer<typeof spotifyAccessTokenSchema>;
+
 export const gameStateSchema = z.object({
   selectedSong: songSchema.nullable(),
   round: z.number(),
+  spotifyAccessToken: spotifyAccessTokenSchema,
   pickerIndex: z.number(),
   teams: z.array(
     z
@@ -307,13 +318,13 @@ export class GameStore {
     if (this.isHost() && this.isRoundOver() && this.countdown === null) {
       console.log("Host is starting the countdown");
       this.countdown = 10;
-      const countdownInterval = setInterval(() => {
+      const countdownInterval = setInterval(async () => {
         if (this.countdown !== null) {
           this.decrementCount();
           if (this.countdown <= 0) {
             console.log("Countdown finished");
             clearInterval(countdownInterval);
-            this.startNewRound();
+            await this.startNewRound();
           }
         } else {
           console.log("Countdown was unexpectedly null");
@@ -324,12 +335,12 @@ export class GameStore {
     }
   }
 
-  startNewRound() {
-    this.resetRound();
+  async startNewRound() {
+    await this.resetRound();
     this.broadcastGameState(this.gameState!);
   }
 
-  resetRound() {
+  async resetRound() {
     console.log("Resetting round");
     if (this.isHost() && this.gameState) {
       console.log("Current game state:", JSON.stringify(this.gameState));
@@ -353,11 +364,17 @@ export class GameStore {
         `New picker selected: Team ${updatedTeams[newPickerIndex].teamId}`
       );
 
+      // Refresh spotify access token
+      const refreshedToken = await SpotifyAuthStorage.refreshAccessToken(
+        this.gameState.spotifyAccessToken.refresh_token
+      );
+
       this.gameState = {
         ...this.gameState,
         selectedSong: null,
         teams: updatedTeams,
         round: this.gameState.round + 1,
+        spotifyAccessToken: refreshedToken,
       };
       this.countdown = null;
       console.log("Updated game state:", JSON.stringify(this.gameState));
@@ -378,6 +395,12 @@ export class GameStore {
   startGame({ gameId }: { gameId: number }) {
     if (this.gameRoom === null)
       throw Error("Can't start game without connection to game channel");
+    const spotifyAccessToken = SpotifyAuthStorage.getSavedAccessToken();
+    if (spotifyAccessToken === null)
+      throw new Error(
+        "Spotify access token not found. Please authenticate with Spotify."
+      );
+    delete spotifyAccessToken["expires"];
     getTeamsAndPlayersForGame({ gameId }).then((teams) => {
       const bgColors = [
         "bg-red-300",
@@ -419,11 +442,13 @@ export class GameStore {
           songGuess: null,
         };
       });
+
       const state: GameState = {
         selectedSong: null,
         pickerIndex: Math.floor(Math.random() * initialTeams.length),
         round: 1,
         teams: initialTeams,
+        spotifyAccessToken: spotifyAccessToken,
       };
 
       // Set the game state
@@ -499,6 +524,42 @@ export class GameStore {
       return `Round over! Next round starting in ${this.countdown} seconds...`;
     }
     return "Players, start guessing!";
+  }
+
+  async testSpotify() {
+    console.log("Starting testSpotify function");
+    try {
+      console.log(
+        "NEXT_PUBLIC_SPOTIFY_ID:",
+        process.env.NEXT_PUBLIC_SPOTIFY_ID
+      );
+      console.log("spotifyAccessToken:", this.gameState?.spotifyAccessToken);
+
+      if (this.gameState?.spotifyAccessToken === undefined) {
+        console.log("Spotify access token is undefined");
+        return null;
+      }
+
+      console.log("Initializing Spotify API with access token");
+      const spotify = SpotifyApi.withAccessToken(
+        process.env.NEXT_PUBLIC_SPOTIFY_ID!,
+        this.gameState.spotifyAccessToken
+      );
+
+      console.log("Fetching Spotify user profile");
+      const spotifyProfile = await spotify.currentUser.profile();
+      console.log("Spotify profile fetched:", spotifyProfile);
+
+      console.log("Fetching top artists");
+      const topArtists = await spotify.currentUser.topItems("artists");
+      console.log("Top artists fetched:", topArtists);
+
+      console.log("testSpotify function completed successfully");
+      return { spotifyProfile, topArtists };
+    } catch (error) {
+      console.error("Error in testSpotify function:", error);
+      throw error;
+    }
   }
 
   isTeamPicker(teamId: number): boolean {

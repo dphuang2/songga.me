@@ -75,7 +75,7 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 sm:p-8 font-sans overflow-auto">
       <button
-        onClick={() => gameStore.startNewRound()}
+        onClick={async () => await gameStore.startNewRound()}
         className="fixed top-2 right-2 text-black text-xs px-2 py-1 rounded opacity-30 hover:opacity-100 transition-opacity z-50"
         title="Force start next round (Debug)"
       >

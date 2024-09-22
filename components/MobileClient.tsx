@@ -121,6 +121,7 @@ const Picker = observer(() => {
     setSelectedSong(song);
     setResults([]);
     setSearch("");
+    gameStore.testSpotify();
   };
 
   const gameStore = useGameStore();
