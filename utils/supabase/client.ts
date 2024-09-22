@@ -32,6 +32,21 @@ export const createClient = () => {
   return supabase;
 };
 
+/**
+ * SpotifyAuthStorage Class
+ *
+ * This class manages the storage and retrieval of Spotify access tokens using the browser's local storage.
+ * It provides methods to save, retrieve, remove, and refresh Spotify access tokens.
+ *
+ * How it works:
+ * 1. The class uses a static key (SPOTIFY_ACCESS_TOKEN_KEY) to store and retrieve the access token in local storage.
+ * 2. All methods check for the availability of the 'window' object to ensure they're running in a browser environment.
+ * 3. The access token is stored as a JSON string and parsed when retrieved.
+ * 4. The refreshAccessToken method makes an API call to refresh the token and then saves the new token.
+ *
+ * Note: This class relies on browser local storage, so it will only work in client-side code.
+ * Server-side usage will result in null returns or no-ops for storage operations.
+ */
 export class SpotifyAuthStorage {
   static SPOTIFY_ACCESS_TOKEN_KEY = "spotify_access_token";
 
