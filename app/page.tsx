@@ -14,6 +14,16 @@ export default async function Index() {
           Song Game
         </h1>
 
+        <div className="mb-6 bg-orange-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
+          <h2 className="text-2xl font-bold mb-4">Want to start a game?</h2>
+          <StartAGame user={user} />
+        </div>
+
+        <div className="mb-6 bg-blue-300 border-4 border-black p-4 rounded-xl transform rotate-1">
+          <h2 className="text-2xl font-bold mb-4">Or join an existing game:</h2>
+          <JoinGameForm />
+        </div>
+
         <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1">
           <h2 className="text-2xl font-bold mb-2">How does it work?</h2>
           <p className="text-lg mb-4">It's quite simple, actually:</p>
@@ -37,16 +47,6 @@ export default async function Index() {
               among players in a round-robin manner
             </li>
           </ul>
-        </div>
-
-        <div className="mb-6 bg-orange-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
-          <h2 className="text-2xl font-bold mb-4">Want to start a game?</h2>
-          <StartAGame user={user} />
-        </div>
-
-        <div className="mb-6 bg-blue-300 border-4 border-black p-4 rounded-xl transform rotate-1">
-          <h2 className="text-2xl font-bold mb-4">Or join an existing game:</h2>
-          <JoinGameForm />
         </div>
       </div>
     </div>
