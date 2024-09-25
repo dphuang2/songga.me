@@ -108,13 +108,20 @@ const Picker = observer(() => {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<string[]>([]);
   const [selectedSong, setSelectedSong] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   const debouncedUpdateResults = debounce(async (query: string) => {
-    // Simulated search results - replace with actual API call
-    const mockResults = query
-      ? [`song 1 - ${query}`, `song 2 - ${query}`, `song 3 - ${query}`]
-      : [];
-    setResults(mockResults);
+    setIsSearching(true);
+    try {
+      // Simulated search results - replace with actual API call
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Add 1 second delay
+      const mockResults = query
+        ? [`song 1 - ${query}`, `song 2 - ${query}`, `song 3 - ${query}`]
+        : [];
+      setResults(mockResults);
+    } finally {
+      setIsSearching(false);
+    }
   }, 300);
 
   const handleSearch = (query: string) => {
@@ -178,6 +185,11 @@ const Picker = observer(() => {
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
             />
+            {isSearching && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+              </div>
+            )}
             {results.length > 0 && (
               <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
                 <div className="max-h-48 overflow-y-auto">
