@@ -13,6 +13,7 @@ import { observer } from "mobx-react-lite";
 import { createContext, useContext } from "react";
 import { ShareThisCode } from "./ShareThisCode";
 import { FunFact } from "./FunFact";
+import debounce from "debounce";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
@@ -108,13 +109,17 @@ const Picker = observer(() => {
   const [results, setResults] = useState<string[]>([]);
   const [selectedSong, setSelectedSong] = useState("");
 
-  const handleSearch = (query: string) => {
-    setSearch(query);
+  const debouncedUpdateResults = debounce(async (query: string) => {
     // Simulated search results - replace with actual API call
     const mockResults = query
       ? [`song 1 - ${query}`, `song 2 - ${query}`, `song 3 - ${query}`]
       : [];
     setResults(mockResults);
+  }, 300);
+
+  const handleSearch = (query: string) => {
+    setSearch(query);
+    debouncedUpdateResults(query);
   };
 
   const handleSelectSong = (song: string) => {
