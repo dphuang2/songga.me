@@ -115,7 +115,12 @@ const Picker = observer(() => {
   const updateResults = async (query: string) => {
     setIsSearching(true);
     try {
-      const searchResults = await gameStore.spotifySearch(query, ["track"]);
+      const searchResults = await gameStore.spotifySearch(
+        query,
+        ["track"],
+        undefined,
+        20
+      );
       if (searchResults && searchResults.tracks && searchResults.tracks.items) {
         setResults(searchResults.tracks.items);
       } else {
@@ -205,27 +210,60 @@ const Picker = observer(() => {
             )}
             {results.length > 0 && (
               <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
-                <div className="max-h-48 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto relative">
                   {results.map((track) => (
                     <button
                       key={track.id}
-                      className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors"
+                      className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors flex items-center"
                       onClick={() => handleSelectSong(track)}
                     >
-                      {track.name} - {track.artists[0].name}
+                      {track.album.images && track.album.images.length > 0 && (
+                        <img
+                          src={
+                            track.album.images[track.album.images.length - 1]
+                              .url
+                          }
+                          alt={`${track.name} album cover`}
+                          className="w-12 h-12 mr-3 rounded-md"
+                        />
+                      )}
+                      <div>
+                        <div>{track.name}</div>
+                        <div className="text-sm text-gray-600">
+                          {track.artists
+                            .map((artist) => artist.name)
+                            .join(", ")}
+                        </div>
+                      </div>
                     </button>
                   ))}
+                  {results.length >= 20 && (
+                    <div className="sticky bottom-0 text-center py-2 bg-gray-100 text-gray-600 font-semibold">
+                      Scroll for more results
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
         {selectedSong && (
-          <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1">
-            <p className="text-xl font-bold">Selected Song:</p>
-            <p className="text-2xl font-black">
-              {selectedSong.name} - {selectedSong.artists[0].name}
-            </p>
+          <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1 flex items-center">
+            {selectedSong.album.images &&
+              selectedSong.album.images.length > 0 && (
+                <img
+                  src={selectedSong.album.images[0].url}
+                  alt={`${selectedSong.name} album cover`}
+                  className="w-16 h-16 mr-4 rounded-md"
+                />
+              )}
+            <div>
+              <p className="text-xl font-bold">Selected Song:</p>
+              <p className="text-2xl font-black">
+                {selectedSong.name} -{" "}
+                {selectedSong.artists.map((artist) => artist.name).join(", ")}
+              </p>
+            </div>
           </div>
         )}
         <button

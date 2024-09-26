@@ -19,6 +19,7 @@ const SYNC_EVENT = "sync";
 export const songSchema = z.object({
   name: z.string(),
   artist: z.string(),
+  albumCoverImage: z.string(),
 });
 
 export const guessStatusSchema = z.object({
@@ -515,7 +516,8 @@ export class GameStore {
     if (this.gameState === null) throw new Error("Game state is null");
     this.gameState.selectedSong = {
       name: track.name,
-      artist: track.artists[0].name,
+      artist: track.artists.map((artist) => artist.name).join(", "),
+      albumCoverImage: track.album.images[0]?.url || "",
     };
     this.broadcastGameState(this.gameState);
   }
