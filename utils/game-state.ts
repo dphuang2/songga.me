@@ -497,12 +497,13 @@ export class GameStore {
 
   isGuessCorrect(type: "artist" | "song", guess: string): boolean {
     if (type === "artist") {
-      if (this.gameState?.selectedSong?.artist === guess) {
-        return true;
+      if (this.gameState?.selectedSong?.artist) {
+        const artists = this.gameState.selectedSong.artist.split(", ");
+        return artists.some((artist) => artist === guess);
       }
     } else {
-      if (this.gameState?.selectedSong?.name === guess) {
-        return true;
+      if (this.gameState?.selectedSong?.name) {
+        return this.gameState.selectedSong.name === guess;
       }
     }
     return false;
