@@ -232,11 +232,11 @@ const Picker = observer(() => {
                   {results.map((track) => (
                     <button
                       key={track.id}
-                      className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors flex items-center"
+                      className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors flex items-start"
                       onClick={() => handleSelectSong(track)}
                     >
                       {track.album.images && track.album.images.length > 0 && (
-                        <div className="w-12 h-12 mr-3 relative">
+                        <div className="flex-shrink-0 w-12 h-12 mr-3 relative">
                           <Image
                             src={
                               track.album.images[track.album.images.length - 1]
@@ -249,9 +249,9 @@ const Picker = observer(() => {
                           />
                         </div>
                       )}
-                      <div>
-                        <div>{track.name}</div>
-                        <div className="text-sm text-gray-600">
+                      <div className="flex-grow min-w-0">
+                        <div className="break-words">{track.name}</div>
+                        <div className="text-sm text-gray-600 break-words">
                           {track.artists
                             .map((artist) => artist.name)
                             .join(", ")}
