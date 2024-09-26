@@ -228,7 +228,7 @@ const Picker = observer(() => {
             )}
             {results.length > 0 && (
               <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
-                <div className="max-h-64 overflow-y-auto relative">
+                <div className="max-h-80 overflow-y-auto relative">
                   {results.map((track) => (
                     <button
                       key={track.id}
@@ -259,12 +259,10 @@ const Picker = observer(() => {
                       </div>
                     </button>
                   ))}
-                  {results.length >= 20 && (
-                    <div className="sticky bottom-0 text-center py-2 bg-gray-100 text-gray-600 font-semibold">
-                      Scroll for more results
-                    </div>
-                  )}
                 </div>
+                {results.length >= 5 && (
+                  <div className="h-8 bg-gradient-to-t from-white to-transparent pointer-events-none absolute bottom-0 left-0 right-0"></div>
+                )}
               </div>
             )}
           </div>
