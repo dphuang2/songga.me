@@ -5,7 +5,7 @@ import { LiveIndicator } from "./LiveIndicator";
 import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
 import { Tables } from "@/utils/supabase/database.types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GameStore } from "@/utils/game-state";
 import { MusicIcon } from "./MusicIcon";
 
@@ -315,8 +315,10 @@ const Picker = observer(() => {
 const Guesser = observer(() => {
   const [artistSearch, setArtistSearch] = useState("");
   const [songSearch, setSongSearch] = useState("");
-  const [artistResults, setArtistResults] = useState<string[]>([]);
-  const [songResults, setSongResults] = useState<string[]>([]);
+  const [artistResults, setArtistResults] = useState<Track[]>([]);
+  const [songResults, setSongResults] = useState<Track[]>([]);
+  const [isSearchingArtist, setIsSearchingArtist] = useState(false);
+  const [isSearchingSong, setIsSearchingSong] = useState(false);
   const gameState = useGameStore();
 
   useEffect(() => {
@@ -334,20 +336,58 @@ const Guesser = observer(() => {
     resetState();
   }, [gameState.gameState?.round]);
 
-  const handleSearch = (type: "artist" | "song", query: string) => {
-    // Simulated search results - replace with actual API call
-    const mockResults = query
-      ? [`song 1 - ${query}`, `song 2 - ${query}`, `song 3 - ${query}`]
-      : [];
-    if (type === "artist") {
-      setArtistResults(mockResults);
-    } else {
-      setSongResults(mockResults);
-    }
-  };
+  const handleSearch = useCallback(
+    debounce(async (type: "artist" | "song", query: string) => {
+      if (query.length === 0) {
+        if (type === "artist") {
+          setArtistResults([]);
+          setIsSearchingArtist(false);
+        } else {
+          setSongResults([]);
+          setIsSearchingSong(false);
+        }
+        return;
+      }
 
-  const handleGuess = (type: "artist" | "song", name: string) => {
-    console.log(`Guessed ${type}: ${name}`);
+      if (type === "artist") {
+        setIsSearchingArtist(true);
+      } else {
+        setIsSearchingSong(true);
+      }
+
+      try {
+        const results = await gameState.spotifySearch(
+          query,
+          ["track"],
+          undefined,
+          5
+        );
+
+        if (results && results.tracks) {
+          if (type === "artist") {
+            setArtistResults(results.tracks.items);
+          } else {
+            setSongResults(results.tracks.items);
+          }
+        }
+      } catch (error) {
+        console.error("Error searching Spotify:", error);
+      } finally {
+        if (type === "artist") {
+          setIsSearchingArtist(false);
+        } else {
+          setIsSearchingSong(false);
+        }
+      }
+    }, 300),
+    [gameState]
+  );
+
+  const handleGuess = (type: "artist" | "song", track: Track) => {
+    const artistName = track.artists.map((artist) => artist.name).join(", ");
+    console.log(
+      `Guessed ${type}: ${type === "artist" ? artistName : track.name}`
+    );
     const newGuessesLeft = {
       ...gameState.guessesLeft(),
       [type]: Math.max(0, gameState.guessesLeft()[type] - 1),
@@ -355,7 +395,10 @@ const Guesser = observer(() => {
     gameState.setGuessesLeft(newGuessesLeft);
     gameState.sendIsTyping(false);
 
-    const isCorrect = gameState.isGuessCorrect(type, name);
+    const isCorrect = gameState.isGuessCorrect(
+      type,
+      type === "artist" ? artistName : track.name
+    );
 
     if (isCorrect) {
       if (type === "artist") {
@@ -370,7 +413,7 @@ const Guesser = observer(() => {
     // Send the guess to the host to allow the host to calculate points and update the scoreboard
     gameState.sendGuess({
       type,
-      value: name,
+      value: type === "artist" ? artistName : track.name,
       lastGuess,
       guessesLeft: gameState.guessesLeft(),
       correctArtist: gameState.correctArtist(),
@@ -379,19 +422,11 @@ const Guesser = observer(() => {
 
     // Update game state accordingly
     if (type === "artist") {
-      setArtistSearch(name);
+      setArtistSearch(artistName);
       setArtistResults([]);
     } else {
-      setSongSearch(name);
+      setSongSearch(track.name);
       setSongResults([]);
-    }
-  };
-
-  const handleFocus = (type: "artist" | "song") => {
-    if (type === "artist") {
-      setSongResults([]);
-    } else {
-      setArtistResults([]);
     }
   };
 
@@ -473,101 +508,172 @@ const Guesser = observer(() => {
             </div>
           )}
 
-        {[
-          {
-            type: "artist" as const,
-            search: gameState.artistGuess() ?? artistSearch,
-            setSearch: setArtistSearch,
-            results: artistResults,
-          },
-          {
-            type: "song" as const,
-            search: gameState.songGuess() ?? songSearch,
-            setSearch: setSongSearch,
-            results: songResults,
-          },
-        ].map(
-          ({
-            type,
-            search,
-            setSearch,
-            results,
-          }: {
-            type: "artist" | "song";
-            search: string;
-            setSearch: React.Dispatch<React.SetStateAction<string>>;
-            results: any[];
-          }) => (
-            <div key={type} className="mb-6">
-              <label
-                className={`text-xl font-black uppercase mb-2 bg-orange-300 px-4 py-2 rounded-xl border-4 border-black transform ${
-                  type === "artist" ? "-rotate-1" : "rotate-2"
-                } inline-block`}
-              >
-                Guess the {type}:
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  className={`w-full px-4 py-2 text-lg border-4 rounded-xl focus:outline-none focus:ring-4 ${
-                    (type === "artist" && gameState.correctArtist()) ||
-                    (type === "song" && gameState.correctSong())
-                      ? "bg-green-200 border-green-500 text-green-700 font-bold"
-                      : gameState.guessesLeft()[type] === 0
-                      ? "bg-gray-200 cursor-not-allowed border-black"
-                      : "border-black focus:ring-blue-400"
-                  }`}
-                  placeholder={`${
-                    (type === "artist" && gameState.correctArtist()) ||
-                    (type === "song" && gameState.correctSong())
-                      ? `Correct ${type}!`
-                      : `Search for ${type}...`
-                  }`}
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    gameState.sendIsTyping(true);
-                    handleSearch(type as "artist" | "song", e.target.value);
-                  }}
-                  onFocus={() => handleFocus(type as "artist" | "song")}
-                  disabled={
-                    gameState.guessesLeft()[type] === 0 ||
-                    (type === "artist"
-                      ? gameState.correctArtist()
-                      : gameState.correctSong())
-                  }
-                />
-                {((type === "artist" && gameState.correctArtist()) ||
-                  (type === "song" && gameState.correctSong())) && (
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-2xl">
-                    ✓
-                  </span>
-                )}
-                {results.length > 0 && gameState.guessesLeft()[type] > 0 && (
-                  <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
-                    <div className="max-h-48 overflow-y-auto">
-                      {results.map((result, index) => (
-                        <button
-                          key={index}
-                          className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors"
-                          onClick={() =>
-                            handleGuess(type as "artist" | "song", result)
-                          }
-                        >
-                          {result}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        )}
+        <SearchComponent
+          type="artist"
+          search={gameState.artistGuess() ?? artistSearch}
+          setSearch={setArtistSearch}
+          results={artistResults}
+          gameState={gameState}
+          handleSearch={(type, query) =>
+            handleSearch(type, query) as Promise<void>
+          }
+          handleGuess={handleGuess}
+          isSearching={isSearchingArtist}
+        />
+
+        <SearchComponent
+          type="song"
+          search={gameState.songGuess() ?? songSearch}
+          setSearch={setSongSearch}
+          results={songResults}
+          gameState={gameState}
+          handleSearch={(type, query) =>
+            handleSearch(type, query) as Promise<void>
+          }
+          handleGuess={handleGuess}
+          isSearching={isSearchingSong}
+        />
       </div>
     </div>
   );
 });
+
+const SearchComponent = ({
+  type,
+  search,
+  setSearch,
+  results,
+  gameState,
+  handleSearch,
+  handleGuess,
+  isSearching,
+}: {
+  type: "artist" | "song";
+  search: string;
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+  results: Track[];
+  gameState: ReturnType<typeof useGameStore>;
+  handleSearch: (type: "artist" | "song", query: string) => Promise<void>;
+  handleGuess: (type: "artist" | "song", track: Track) => void;
+  isSearching: boolean;
+}) => {
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchResultsRef = useRef<HTMLDivElement>(null);
+  const [isActive, setIsActive] = useState(false);
+
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    if (
+      searchInputRef.current &&
+      !searchInputRef.current.contains(e.target as Node) &&
+      searchResultsRef.current &&
+      !searchResultsRef.current.contains(e.target as Node)
+    ) {
+      setIsActive(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [handleClickOutside]);
+
+  return (
+    <div className="mb-6 search-container">
+      <label
+        className={`text-xl font-black uppercase mb-2 bg-orange-300 px-4 py-2 rounded-xl border-4 border-black transform ${
+          type === "artist" ? "-rotate-1" : "rotate-2"
+        } inline-block`}
+      >
+        Guess the {type}:
+      </label>
+      <div className="relative">
+        <input
+          ref={searchInputRef}
+          type="text"
+          className={`w-full px-4 py-2 text-lg border-4 rounded-xl focus:outline-none focus:ring-4 ${
+            (type === "artist" && gameState.correctArtist()) ||
+            (type === "song" && gameState.correctSong())
+              ? "bg-green-200 border-green-500 text-green-700 font-bold"
+              : gameState.guessesLeft()[type] === 0
+              ? "bg-gray-200 cursor-not-allowed border-black"
+              : "border-black focus:ring-blue-400"
+          }`}
+          placeholder={`${
+            (type === "artist" && gameState.correctArtist()) ||
+            (type === "song" && gameState.correctSong())
+              ? `Correct ${type}!`
+              : `Search for ${type}...`
+          }`}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            gameState.sendIsTyping(true);
+            handleSearch(type, e.target.value);
+          }}
+          onFocus={() => setIsActive(true)}
+          disabled={
+            gameState.guessesLeft()[type] === 0 ||
+            (type === "artist"
+              ? gameState.correctArtist()
+              : gameState.correctSong())
+          }
+        />
+        {((type === "artist" && gameState.correctArtist()) ||
+          (type === "song" && gameState.correctSong())) && (
+          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-2xl">
+            ✓
+          </span>
+        )}
+        {isSearching && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+        {results.length > 0 &&
+          gameState.guessesLeft()[type] > 0 &&
+          isActive && (
+            <div
+              ref={searchResultsRef}
+              className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg"
+            >
+              <div className="max-h-48 overflow-y-auto">
+                {results.map((track, index) => (
+                  <button
+                    key={index}
+                    className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors flex items-center"
+                    onClick={() => {
+                      handleGuess(type, track);
+                      setIsActive(false);
+                    }}
+                  >
+                    {track.album.images && track.album.images.length > 0 && (
+                      <div className="w-12 h-12 mr-3 relative flex-shrink-0">
+                        <Image
+                          src={track.album.images[0].url}
+                          alt="Album Cover"
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded-lg border-2 border-black"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-bold">{track.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {track.artists.map((artist) => artist.name).join(", ")}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+      </div>
+    </div>
+  );
+};
 
 const Lobby = observer(
   ({
