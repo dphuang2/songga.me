@@ -5,7 +5,7 @@ import { LiveIndicator } from "./LiveIndicator";
 import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
 import { Tables } from "@/utils/supabase/database.types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GameStore } from "@/utils/game-state";
 import { MusicIcon } from "./MusicIcon";
 
@@ -14,6 +14,7 @@ import { createContext, useContext } from "react";
 import { ShareThisCode } from "./ShareThisCode";
 import { FunFact } from "./FunFact";
 import debounce from "debounce";
+import { Track } from "@spotify/web-api-ts-sdk";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
@@ -106,36 +107,48 @@ const Game = observer(() => {
 
 const Picker = observer(() => {
   const [search, setSearch] = useState("");
-  const [results, setResults] = useState<string[]>([]);
-  const [selectedSong, setSelectedSong] = useState("");
+  const [results, setResults] = useState<Track[]>([]);
+  const [selectedSong, setSelectedSong] = useState<Track | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const gameStore = useGameStore();
 
-  const debouncedUpdateResults = debounce(async (query: string) => {
+  const updateResults = async (query: string) => {
     setIsSearching(true);
     try {
-      // Simulated search results - replace with actual API call
-      const results = await gameStore.spotifySearch(query, ["track"]);
-      console.log(results);
-      const mockResults = query
-        ? [`song 1 - ${query}`, `song 2 - ${query}`, `song 3 - ${query}`]
-        : [];
-      setResults(mockResults);
+      const searchResults = await gameStore.spotifySearch(query, ["track"]);
+      if (searchResults && searchResults.tracks && searchResults.tracks.items) {
+        setResults(searchResults.tracks.items);
+      } else {
+        setResults([]);
+      }
+    } catch (error) {
+      console.error("Error searching for tracks:", error);
+      setResults([]);
     } finally {
       setIsSearching(false);
     }
-  }, 300);
+  };
+
+  const debouncedUpdateResults = useCallback(
+    debounce((query: string) => {
+      if (query) {
+        updateResults(query);
+      } else {
+        setResults([]);
+      }
+    }, 300),
+    []
+  );
 
   const handleSearch = (query: string) => {
     setSearch(query);
     debouncedUpdateResults(query);
   };
 
-  const handleSelectSong = (song: string) => {
+  const handleSelectSong = (song: Track) => {
     setSelectedSong(song);
     setResults([]);
     setSearch("");
-    gameStore.testSpotify();
   };
 
   if (gameStore.isCurrentRoundActive()) {
@@ -193,13 +206,13 @@ const Picker = observer(() => {
             {results.length > 0 && (
               <div className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg">
                 <div className="max-h-48 overflow-y-auto">
-                  {results.map((result, index) => (
+                  {results.map((track) => (
                     <button
-                      key={index}
+                      key={track.id}
                       className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors"
-                      onClick={() => handleSelectSong(result)}
+                      onClick={() => handleSelectSong(track)}
                     >
-                      {result}
+                      {track.name} - {track.artists[0].name}
                     </button>
                   ))}
                 </div>
@@ -210,7 +223,9 @@ const Picker = observer(() => {
         {selectedSong && (
           <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1">
             <p className="text-xl font-bold">Selected Song:</p>
-            <p className="text-2xl font-black">{selectedSong}</p>
+            <p className="text-2xl font-black">
+              {selectedSong.name} - {selectedSong.artists[0].name}
+            </p>
           </div>
         )}
         <button
@@ -218,7 +233,9 @@ const Picker = observer(() => {
             !selectedSong ? "opacity-50 cursor-not-allowed" : ""
           }`}
           onClick={() => {
-            gameStore.startRound({ song: selectedSong });
+            if (selectedSong) {
+              gameStore.startRound({ track: selectedSong });
+            }
           }}
           disabled={!selectedSong || !gameStore.connectedToGameRoom()}
         >

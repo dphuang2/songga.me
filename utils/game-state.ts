@@ -3,7 +3,13 @@ import { makeAutoObservable, runInAction } from "mobx";
 import { z } from "zod";
 import { createClient, SpotifyAuthStorage } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
-import { ItemTypes, Market, MaxInt, SpotifyApi } from "@spotify/web-api-ts-sdk";
+import {
+  ItemTypes,
+  Market,
+  MaxInt,
+  SpotifyApi,
+  Track,
+} from "@spotify/web-api-ts-sdk";
 
 const GUESS_EVENT = "guess";
 const IS_TYPING_EVENT = "is-typing";
@@ -505,11 +511,11 @@ export class GameStore {
     return this.gameState !== null;
   }
 
-  startRound({ song }: { song: string }) {
+  startRound({ track }: { track: Track }) {
     if (this.gameState === null) throw new Error("Game state is null");
     this.gameState.selectedSong = {
-      name: song,
-      artist: song,
+      name: track.name,
+      artist: track.artists[0].name,
     };
     this.broadcastGameState(this.gameState);
   }
