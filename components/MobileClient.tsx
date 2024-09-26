@@ -109,12 +109,14 @@ const Picker = observer(() => {
   const [results, setResults] = useState<string[]>([]);
   const [selectedSong, setSelectedSong] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const gameStore = useGameStore();
 
   const debouncedUpdateResults = debounce(async (query: string) => {
     setIsSearching(true);
     try {
       // Simulated search results - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Add 1 second delay
+      const results = await gameStore.spotifySearch(query, ["track"]);
+      console.log(results);
       const mockResults = query
         ? [`song 1 - ${query}`, `song 2 - ${query}`, `song 3 - ${query}`]
         : [];
@@ -135,8 +137,6 @@ const Picker = observer(() => {
     setSearch("");
     gameStore.testSpotify();
   };
-
-  const gameStore = useGameStore();
 
   if (gameStore.isCurrentRoundActive()) {
     return (

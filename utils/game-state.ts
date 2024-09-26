@@ -3,7 +3,7 @@ import { makeAutoObservable, runInAction } from "mobx";
 import { z } from "zod";
 import { createClient, SpotifyAuthStorage } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
-import { SpotifyApi } from "@spotify/web-api-ts-sdk";
+import { ItemTypes, Market, MaxInt, SpotifyApi } from "@spotify/web-api-ts-sdk";
 
 const GUESS_EVENT = "guess";
 const IS_TYPING_EVENT = "is-typing";
@@ -524,6 +524,40 @@ export class GameStore {
       return `Round over! Next round starting in ${this.countdown} seconds...`;
     }
     return "Players, start guessing!";
+  }
+
+  async spotifySearch(
+    q: string,
+    type: readonly ItemTypes[],
+    market?: Market,
+    limit?: MaxInt<50>,
+    offset?: number,
+    include_external?: string
+  ) {
+    try {
+      if (this.gameState?.spotifyAccessToken === undefined) {
+        return null;
+      }
+
+      const spotify = SpotifyApi.withAccessToken(
+        process.env.NEXT_PUBLIC_SPOTIFY_ID!,
+        this.gameState.spotifyAccessToken
+      );
+
+      const searchResults = await spotify.search(
+        q,
+        type,
+        market,
+        limit,
+        offset,
+        include_external
+      );
+
+      return searchResults;
+    } catch (error) {
+      console.error("Error in testSpotify function:", error);
+      throw error;
+    }
   }
 
   async testSpotify() {
