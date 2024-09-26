@@ -119,6 +119,7 @@ export class GameStore {
   gameCode: string;
   currentPlayerId: number | undefined;
   countdown: number | null = null;
+  private audioContext: AudioContext | null = null;
 
   constructor({
     gameCode,
@@ -131,6 +132,7 @@ export class GameStore {
     makeAutoObservable(this);
     this.gameCode = gameCode;
     this.initializeGameRoom();
+    this.initAudioContext();
   }
 
   getCurrentTeam(): GameState["teams"][number] | undefined {
@@ -394,8 +396,83 @@ export class GameStore {
     if (this.countdown !== null) {
       this.countdown--;
       console.log(`Countdown: ${this.countdown}`);
+
+      if (this.audioContext && this.audioContext.state === "running") {
+        try {
+          const oscillator = this.audioContext.createOscillator();
+          const gainNode = this.audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(this.audioContext.destination);
+
+          // Use a major scale for a more jingle-like sound
+          const majorScale = [
+            261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25,
+          ]; // C4 to C5
+          const noteIndex = this.countdown % 8;
+          const frequency = majorScale[noteIndex];
+
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(
+            frequency,
+            this.audioContext.currentTime
+          );
+
+          // Create a more musical envelope
+          const now = this.audioContext.currentTime;
+          gainNode.gain.setValueAtTime(0, now);
+          gainNode.gain.linearRampToValueAtTime(0.2, now + 0.05);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+          oscillator.start(now);
+          oscillator.stop(now + 0.5);
+
+          // Add a harmony note
+          const harmonyOscillator = this.audioContext.createOscillator();
+          const harmonyGain = this.audioContext.createGain();
+          harmonyOscillator.connect(harmonyGain);
+          harmonyGain.connect(this.audioContext.destination);
+
+          const harmonyFrequency = frequency * 1.25; // Perfect fifth
+          harmonyOscillator.type = "sine";
+          harmonyOscillator.frequency.setValueAtTime(harmonyFrequency, now);
+
+          harmonyGain.gain.setValueAtTime(0, now);
+          harmonyGain.gain.linearRampToValueAtTime(0.1, now + 0.05);
+          harmonyGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+          harmonyOscillator.start(now);
+          harmonyOscillator.stop(now + 0.5);
+
+          console.log(
+            `Playing jingle sound: Main Frequency ${frequency}Hz, Harmony Frequency ${harmonyFrequency}Hz`
+          );
+        } catch (error) {
+          console.error("Error playing jingle sound:", error);
+        }
+      } else {
+        console.log("AudioContext is not running. Sound cannot be played.");
+        this.initAudioContext(); // Try to reinitialize the AudioContext
+      }
     } else {
       console.log("Countdown was unexpectedly null");
+    }
+  }
+
+  initAudioContext() {
+    if (!this.audioContext) {
+      this.audioContext = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
+    }
+    if (this.audioContext.state === "suspended") {
+      this.audioContext
+        .resume()
+        .then(() => {
+          console.log("AudioContext resumed successfully");
+        })
+        .catch((error) => {
+          console.error("Failed to resume AudioContext:", error);
+        });
     }
   }
 
