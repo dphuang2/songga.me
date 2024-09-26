@@ -8,6 +8,7 @@ import { Tables } from "@/utils/supabase/database.types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GameStore } from "@/utils/game-state";
 import { MusicIcon } from "./MusicIcon";
+import { Artist } from "@spotify/web-api-ts-sdk";
 
 import { observer } from "mobx-react-lite";
 import { createContext, useContext } from "react";
@@ -313,7 +314,7 @@ const Picker = observer(() => {
 const Guesser = observer(() => {
   const [artistSearch, setArtistSearch] = useState("");
   const [songSearch, setSongSearch] = useState("");
-  const [artistResults, setArtistResults] = useState<Track[]>([]);
+  const [artistResults, setArtistResults] = useState<Artist[]>([]);
   const [songResults, setSongResults] = useState<Track[]>([]);
   const [isSearchingArtist, setIsSearchingArtist] = useState(false);
   const [isSearchingSong, setIsSearchingSong] = useState(false);
@@ -356,15 +357,15 @@ const Guesser = observer(() => {
       try {
         const results = await gameState.spotifySearch(
           query,
-          ["track"],
+          [type === "song" ? "track" : "artist"],
           undefined,
           5
         );
 
-        if (results && results.tracks) {
-          if (type === "artist") {
-            setArtistResults(results.tracks.items);
-          } else {
+        if (results) {
+          if (type === "artist" && results.artists) {
+            setArtistResults(results.artists.items);
+          } else if (type === "song" && results.tracks) {
             setSongResults(results.tracks.items);
           }
         }
@@ -381,11 +382,9 @@ const Guesser = observer(() => {
     [gameState]
   );
 
-  const handleGuess = (type: "artist" | "song", track: Track) => {
-    const artistName = track.artists.map((artist) => artist.name).join(", ");
-    console.log(
-      `Guessed ${type}: ${type === "artist" ? artistName : track.name}`
-    );
+  const handleGuess = (type: "artist" | "song", item: Artist | Track) => {
+    const guessValue = item.name;
+    console.log(`Guessed ${type}: ${guessValue}`);
     const newGuessesLeft = {
       ...gameState.guessesLeft(),
       [type]: Math.max(0, gameState.guessesLeft()[type] - 1),
@@ -393,10 +392,7 @@ const Guesser = observer(() => {
     gameState.setGuessesLeft(newGuessesLeft);
     gameState.sendIsTyping(false);
 
-    const isCorrect = gameState.isGuessCorrect(
-      type,
-      type === "artist" ? artistName : track.name
-    );
+    const isCorrect = gameState.isGuessCorrect(type, guessValue);
 
     if (isCorrect) {
       if (type === "artist") {
@@ -408,22 +404,20 @@ const Guesser = observer(() => {
 
     const lastGuess = newGuessesLeft.artist === 0 && newGuessesLeft.song === 0;
 
-    // Send the guess to the host to allow the host to calculate points and update the scoreboard
     gameState.sendGuess({
       type,
-      value: type === "artist" ? artistName : track.name,
+      value: guessValue,
       lastGuess,
       guessesLeft: gameState.guessesLeft(),
       correctArtist: gameState.correctArtist(),
       correctSong: gameState.correctSong(),
     });
 
-    // Update game state accordingly
     if (type === "artist") {
-      setArtistSearch(artistName);
+      setArtistSearch(guessValue);
       setArtistResults([]);
     } else {
-      setSongSearch(track.name);
+      setSongSearch(guessValue);
       setSongResults([]);
     }
   };
@@ -549,10 +543,10 @@ const SearchComponent = ({
   type: "artist" | "song";
   search: string;
   setSearch: React.Dispatch<React.SetStateAction<string>>;
-  results: Track[];
+  results: Artist[] | Track[];
   gameState: ReturnType<typeof useGameStore>;
   handleSearch: (type: "artist" | "song", query: string) => Promise<void>;
-  handleGuess: (type: "artist" | "song", track: Track) => void;
+  handleGuess: (type: "artist" | "song", item: Artist | Track) => void;
   isSearching: boolean;
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -637,31 +631,43 @@ const SearchComponent = ({
               className="absolute z-10 mt-2 w-full bg-white border-4 border-black rounded-xl overflow-hidden shadow-lg"
             >
               <div className="max-h-48 overflow-y-auto">
-                {results.map((track, index) => (
+                {results.map((item, index) => (
                   <button
                     key={index}
                     className="w-full text-left px-4 py-3 text-lg font-bold hover:bg-yellow-200 focus:bg-yellow-200 focus:outline-none transition-colors flex items-center"
                     onClick={() => {
-                      handleGuess(type, track);
+                      handleGuess(type, item);
                       setIsActive(false);
                     }}
                   >
-                    {track.album.images && track.album.images.length > 0 && (
-                      <div className="w-12 h-12 mr-3 relative flex-shrink-0">
-                        <Image
-                          src={track.album.images[0].url}
-                          alt="Album Cover"
-                          layout="fill"
-                          objectFit="cover"
-                          className="rounded-lg border-2 border-black"
-                        />
-                      </div>
-                    )}
+                    {type === "song" &&
+                      (item as Track).album.images &&
+                      (item as Track).album.images.length > 0 && (
+                        <div className="w-12 h-12 mr-3 relative flex-shrink-0">
+                          <Image
+                            src={(item as Track).album.images[0].url}
+                            alt="Album Cover"
+                            layout="fill"
+                            objectFit="cover"
+                            className="rounded-lg border-2 border-black"
+                          />
+                        </div>
+                      )}
+                    {type === "artist" &&
+                      (item as Artist).images &&
+                      (item as Artist).images.length > 0 && (
+                        <div className="w-12 h-12 mr-3 relative flex-shrink-0">
+                          <Image
+                            src={(item as Artist).images[0].url}
+                            alt="Artist Image"
+                            layout="fill"
+                            objectFit="cover"
+                            className="rounded-lg border-2 border-black"
+                          />
+                        </div>
+                      )}
                     <div>
-                      <p className="font-bold">{track.name}</p>
-                      <p className="text-sm text-gray-600">
-                        {track.artists.map((artist) => artist.name).join(", ")}
-                      </p>
+                      <p className="font-bold">{item.name}</p>
                     </div>
                   </button>
                 ))}
