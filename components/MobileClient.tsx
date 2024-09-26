@@ -15,6 +15,7 @@ import { ShareThisCode } from "./ShareThisCode";
 import { FunFact } from "./FunFact";
 import debounce from "debounce";
 import { Track } from "@spotify/web-api-ts-sdk";
+import Image from "next/image";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
@@ -170,11 +171,28 @@ const Picker = observer(() => {
             </p>
           </div>
           <div className="mb-6 bg-blue-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
-            <p className="text-xl font-bold">Selected Song:</p>
-            <p className="text-2xl font-black mt-2">
-              {gameStore.gameState?.selectedSong?.name} -{" "}
-              {gameStore.gameState?.selectedSong?.artist}
-            </p>
+            <p className="text-xl font-bold mb-4">Selected Song:</p>
+            <div className="flex flex-col items-start">
+              {gameStore.gameState?.selectedSong?.albumCoverImage && (
+                <div className="w-32 h-32 mb-4 relative">
+                  <Image
+                    src={gameStore.gameState.selectedSong.albumCoverImage}
+                    alt="Album Cover"
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-lg border-4 border-black"
+                  />
+                </div>
+              )}
+              <div className="text-left">
+                <p className="text-2xl font-black mb-2">
+                  {gameStore.gameState?.selectedSong?.name}
+                </p>
+                <p className="text-xl text-gray-700 font-bold">
+                  {gameStore.gameState?.selectedSong?.artist}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -218,14 +236,18 @@ const Picker = observer(() => {
                       onClick={() => handleSelectSong(track)}
                     >
                       {track.album.images && track.album.images.length > 0 && (
-                        <img
-                          src={
-                            track.album.images[track.album.images.length - 1]
-                              .url
-                          }
-                          alt={`${track.name} album cover`}
-                          className="w-12 h-12 mr-3 rounded-md"
-                        />
+                        <div className="w-12 h-12 mr-3 relative">
+                          <Image
+                            src={
+                              track.album.images[track.album.images.length - 1]
+                                .url
+                            }
+                            alt={`${track.name} album cover`}
+                            layout="fill"
+                            objectFit="cover"
+                            className="rounded-md"
+                          />
+                        </div>
                       )}
                       <div>
                         <div>{track.name}</div>
@@ -248,21 +270,27 @@ const Picker = observer(() => {
           </div>
         </div>
         {selectedSong && (
-          <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1 flex items-center">
-            {selectedSong.album.images &&
-              selectedSong.album.images.length > 0 && (
-                <img
-                  src={selectedSong.album.images[0].url}
-                  alt={`${selectedSong.name} album cover`}
-                  className="w-16 h-16 mr-4 rounded-md"
-                />
-              )}
-            <div>
-              <p className="text-xl font-bold">Selected Song:</p>
-              <p className="text-2xl font-black">
-                {selectedSong.name} -{" "}
-                {selectedSong.artists.map((artist) => artist.name).join(", ")}
-              </p>
+          <div className="mb-6 bg-blue-300 border-4 border-black p-4 rounded-xl transform -rotate-1">
+            <p className="text-xl font-bold mb-4">Selected Song:</p>
+            <div className="flex flex-col items-start">
+              {selectedSong.album.images &&
+                selectedSong.album.images.length > 0 && (
+                  <div className="w-32 h-32 mb-4 relative">
+                    <Image
+                      src={selectedSong.album.images[0].url}
+                      alt="Album Cover"
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-lg border-4 border-black"
+                    />
+                  </div>
+                )}
+              <div className="text-left">
+                <p className="text-2xl font-black mb-2">{selectedSong.name}</p>
+                <p className="text-xl text-gray-700 font-bold">
+                  {selectedSong.artists.map((artist) => artist.name).join(", ")}
+                </p>
+              </div>
             </div>
           </div>
         )}
