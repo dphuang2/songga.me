@@ -21,6 +21,7 @@ export const SPOTIFY_SCOPES =
   "streaming \
       user-read-playback-state \
       user-read-currently-playing \
+      user-modify-playback-state \
       user-top-read \
       user-read-email";
 
