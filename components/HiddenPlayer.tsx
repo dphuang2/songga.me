@@ -111,8 +111,21 @@ const HiddenPlayer: React.FC = observer(() => {
     };
   }, [gameStore]);
 
+  const togglePlayback = () => {
+    if (window.player) {
+      if (isPlaying) {
+        window.player.pause();
+      } else {
+        window.player.resume();
+      }
+    }
+  };
+
   return (
-    <div className="fixed bottom-4 right-4 bg-black text-white px-3 py-1 rounded-full text-sm">
+    <div
+      className="fixed bottom-4 right-4 bg-black text-white px-3 py-1 rounded-full text-sm cursor-pointer"
+      onClick={togglePlayback}
+    >
       {isPlaying ? "Playing" : "Not Playing"}
     </div>
   );

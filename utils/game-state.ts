@@ -59,6 +59,7 @@ export type SpotifyAccessToken = z.infer<typeof spotifyAccessTokenSchema>;
 
 export const gameStateSchema = z.object({
   selectedSong: songSchema.nullable(),
+  lastSong: songSchema.nullable(),
   round: z.number(),
   spotifyAccessToken: spotifyAccessTokenSchema,
   pickerIndex: z.number(),
@@ -534,6 +535,7 @@ export class GameStore {
 
       const state: GameState = {
         selectedSong: null,
+        lastSong: null,
         pickerIndex: Math.floor(Math.random() * initialTeams.length),
         round: 1,
         teams: initialTeams,
@@ -597,11 +599,13 @@ export class GameStore {
 
   async startRound({ track }: { track: Track }) {
     if (this.gameState === null) throw new Error("Game state is null");
-    this.gameState.selectedSong = {
+    const selectedSong = {
       name: track.name,
       artist: track.artists.map((artist) => artist.name).join(", "),
       albumCoverImage: track.album.images[0]?.url || "",
     };
+    this.gameState.selectedSong = selectedSong;
+    this.gameState.lastSong = selectedSong;
     let retries = 0;
     const maxRetries = 5;
     while (!(await this.setPlayback(track)) && retries < maxRetries) {
