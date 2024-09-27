@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createClient, SpotifyAuthStorage } from "./supabase/client";
 import { getTeamsAndPlayersForGame } from "./supabase/get-teams-and-players-for-game";
 import {
+  Devices,
   ItemTypes,
   Market,
   MaxInt,
@@ -597,6 +598,7 @@ export class GameStore {
       artist: track.artists.map((artist) => artist.name).join(", "),
       albumCoverImage: track.album.images[0]?.url || "",
     };
+    this.setPlayback(track);
     this.broadcastGameState(this.gameState);
   }
 
@@ -643,6 +645,105 @@ export class GameStore {
     } catch (error) {
       console.error("Error in testSpotify function:", error);
       throw error;
+    }
+  }
+
+  async getAvailableDevices(): Promise<Devices | null> {
+    console.log("Fetching available devices");
+    try {
+      if (!this.gameState?.spotifyAccessToken) {
+        console.error("Spotify access token is undefined");
+        return null;
+      }
+
+      const spotify = SpotifyApi.withAccessToken(
+        process.env.NEXT_PUBLIC_SPOTIFY_ID!,
+        this.gameState.spotifyAccessToken
+      );
+
+      const devices = await spotify.player.getAvailableDevices();
+
+      console.log("Available devices:", devices.devices);
+      devices.devices.forEach((device, index) => {
+        console.log(`Device ${index + 1}:`);
+        console.log(`  ID: ${device.id}`);
+        console.log(`  Name: ${device.name}`);
+        console.log(`  Type: ${device.type}`);
+        console.log(`  Is Active: ${device.is_active}`);
+        console.log(`  Is Private Session: ${device.is_private_session}`);
+        console.log(`  Is Restricted: ${device.is_restricted}`);
+        console.log(`  Volume Percent: ${device.volume_percent}`);
+      });
+
+      return devices;
+    } catch (error) {
+      console.error("Error fetching available devices:", error);
+      return null;
+    }
+  }
+
+  async setPlayback(track: Track) {
+    console.log(`Attempting to set playback for track: ${track.name}`);
+    try {
+      if (!this.gameState?.spotifyAccessToken) {
+        console.error("Spotify access token is undefined");
+        return;
+      }
+      console.log("Spotify access token is available");
+
+      console.log("Initializing Spotify API with access token");
+      const spotify = SpotifyApi.withAccessToken(
+        process.env.NEXT_PUBLIC_SPOTIFY_ID!,
+        this.gameState.spotifyAccessToken
+      );
+
+      console.log("Fetching available devices");
+      const devices = await this.getAvailableDevices();
+
+      if (!devices || devices.devices.length === 0) {
+        console.error("No available devices found");
+        return;
+      }
+
+      console.log("Available devices:", devices.devices);
+      devices.devices.forEach((device, index) => {
+        console.log(`Device ${index + 1}:`);
+        console.log(`  ID: ${device.id}`);
+        console.log(`  Name: ${device.name}`);
+        console.log(`  Type: ${device.type}`);
+        console.log(`  Is Active: ${device.is_active}`);
+        console.log(`  Is Private Session: ${device.is_private_session}`);
+        console.log(`  Is Restricted: ${device.is_restricted}`);
+        console.log(`  Volume Percent: ${device.volume_percent}`);
+      });
+
+      const computerDevice = devices.devices.find(
+        (device) => device.type === "Computer"
+      );
+      const activeDevice = devices.devices.find((device) => device.is_active);
+      const targetDevice =
+        computerDevice?.id || activeDevice?.id || devices.devices[0].id;
+
+      if (!targetDevice) {
+        console.error("No device ID available");
+        return;
+      }
+
+      console.log(
+        `Starting playback for track URI: ${track.uri} on device: ${targetDevice}`
+      );
+      // Start playback on the active device or the first available device
+      await spotify.player.startResumePlayback(targetDevice, undefined, [
+        track.uri,
+      ]);
+
+      console.log(`Playback successfully started for track: ${track.name}`);
+    } catch (error) {
+      console.error("Error setting playback:", error);
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
     }
   }
 
