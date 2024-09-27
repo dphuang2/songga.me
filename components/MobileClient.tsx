@@ -179,9 +179,10 @@ const Picker = observer(() => {
                   <Image
                     src={gameStore.gameState.selectedSong.albumCoverImage}
                     alt="Album Cover"
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-lg border-4 border-black"
+                    className="object-cover w-full h-full rounded-lg border-4 border-black"
+                    width={128}
+                    height={128}
+                    sizes="128px"
                   />
                 </div>
               )}
@@ -244,9 +245,10 @@ const Picker = observer(() => {
                                 .url
                             }
                             alt={`${track.name} album cover`}
-                            layout="fill"
-                            objectFit="cover"
-                            className="rounded-md"
+                            className="h-full w-full rounded-md object-cover"
+                            height={48}
+                            width={48}
+                            sizes="48px"
                           />
                         </div>
                       )}
@@ -278,9 +280,10 @@ const Picker = observer(() => {
                     <Image
                       src={selectedSong.album.images[0].url}
                       alt="Album Cover"
-                      layout="fill"
-                      objectFit="cover"
-                      className="rounded-lg border-4 border-black"
+                      className="w-full h-full rounded-lg border-4 border-black object-cover"
+                      width={128}
+                      height={128}
+                      sizes="128px"
                     />
                   </div>
                 )}
@@ -647,9 +650,10 @@ const SearchComponent = ({
                           <Image
                             src={(item as Track).album.images[0].url}
                             alt="Album Cover"
-                            layout="fill"
-                            objectFit="cover"
-                            className="rounded-lg border-2 border-black"
+                            className="w-full h-full rounded-lg border-2 border-black"
+                            width={48}
+                            height={48}
+                            sizes="48px"
                           />
                         </div>
                       )}
@@ -660,9 +664,10 @@ const SearchComponent = ({
                           <Image
                             src={(item as Artist).images[0].url}
                             alt="Artist Image"
-                            layout="fill"
-                            objectFit="cover"
-                            className="rounded-lg border-2 border-black"
+                            className="w-full h-full object-cover rounded-lg border-2 border-black"
+                            width={48}
+                            height={48}
+                            sizes="48px"
                           />
                         </div>
                       )}
