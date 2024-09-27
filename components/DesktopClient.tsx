@@ -9,6 +9,7 @@ import { observer } from "mobx-react-lite";
 import { FunFact } from "./FunFact";
 import { GameState, GameStore } from "@/utils/game-state";
 import { ShareThisCode } from "./ShareThisCode";
+import HiddenPlayer from "./HiddenPlayer";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
@@ -27,7 +28,7 @@ const GameStoreProvider = ({
   );
 };
 
-const useGameStore = () => {
+export const useGameStore = () => {
   const store = useContext(GameStoreContext);
   if (!store) {
     throw new Error("useGameStore must be used within a GameStoreProvider");
@@ -74,6 +75,7 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 sm:p-8 font-sans overflow-auto">
+      <HiddenPlayer />
       <button
         onClick={async () => await gameStore.startNewRound()}
         className="fixed top-2 right-2 text-black text-xs px-2 py-1 rounded opacity-30 hover:opacity-100 transition-opacity z-50"
