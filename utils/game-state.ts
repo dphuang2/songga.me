@@ -591,14 +591,22 @@ export class GameStore {
     return this.gameState !== null;
   }
 
-  startRound({ track }: { track: Track }) {
+  async startRound({ track }: { track: Track }) {
     if (this.gameState === null) throw new Error("Game state is null");
     this.gameState.selectedSong = {
       name: track.name,
       artist: track.artists.map((artist) => artist.name).join(", "),
       albumCoverImage: track.album.images[0]?.url || "",
     };
-    this.setPlayback(track);
+    let retries = 0;
+    const maxRetries = 5;
+    while (!(await this.setPlayback(track)) && retries < maxRetries) {
+      retries++;
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second before retrying
+    }
+    if (retries === maxRetries) {
+      console.error("Failed to set playback after maximum retries");
+    }
     this.broadcastGameState(this.gameState);
   }
 
@@ -682,12 +690,12 @@ export class GameStore {
     }
   }
 
-  async setPlayback(track: Track) {
+  async setPlayback(track: Track): Promise<boolean> {
     console.log(`Attempting to set playback for track: ${track.name}`);
     try {
       if (!this.gameState?.spotifyAccessToken) {
         console.error("Spotify access token is undefined");
-        return;
+        return false;
       }
       console.log("Spotify access token is available");
 
@@ -702,7 +710,7 @@ export class GameStore {
 
       if (!devices || devices.devices.length === 0) {
         console.error("No available devices found");
-        return;
+        return false;
       }
 
       console.log("Fetching current playback state");
@@ -754,7 +762,7 @@ export class GameStore {
 
       if (!targetDevice) {
         console.error("No device ID available");
-        return;
+        return false;
       }
 
       console.log(
@@ -766,12 +774,14 @@ export class GameStore {
       ]);
 
       console.log(`Playback successfully started for track: ${track.name}`);
+      return true;
     } catch (error) {
       console.error("Error setting playback:", error);
       if (error instanceof Error) {
         console.error("Error message:", error.message);
         console.error("Error stack:", error.stack);
       }
+      return false;
     }
   }
 

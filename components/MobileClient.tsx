@@ -300,9 +300,9 @@ const Picker = observer(() => {
           className={`w-full bg-blue-500 hover:bg-blue-700 text-white text-xl font-bold py-3 px-6 rounded-xl border-4 border-black transition-colors ${
             !selectedSong ? "opacity-50 cursor-not-allowed" : ""
           }`}
-          onClick={() => {
+          onClick={async () => {
             if (selectedSong) {
-              gameStore.startRound({ track: selectedSong });
+              await gameStore.startRound({ track: selectedSong });
             }
           }}
           disabled={!selectedSong || !gameStore.connectedToGameRoom()}
