@@ -461,19 +461,23 @@ export class GameStore {
   }
 
   initAudioContext() {
-    if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
-    }
-    if (this.audioContext.state === "suspended") {
-      this.audioContext
-        .resume()
-        .then(() => {
-          console.log("AudioContext resumed successfully");
-        })
-        .catch((error) => {
-          console.error("Failed to resume AudioContext:", error);
-        });
+    if (typeof window !== "undefined") {
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+      }
+      if (this.audioContext.state === "suspended") {
+        this.audioContext
+          .resume()
+          .then(() => {
+            console.log("AudioContext resumed successfully");
+          })
+          .catch((error) => {
+            console.error("Failed to resume AudioContext:", error);
+          });
+      }
+    } else {
+      console.log("AudioContext not initialized: not in browser environment");
     }
   }
 
@@ -540,6 +544,76 @@ export class GameStore {
       this.setGameState(state);
       this.broadcastGameState(state);
     });
+  }
+
+  connectWebPlayer() {
+    if (typeof window === "undefined") return;
+    (window as any).onSpotifyWebPlaybackSDKReady = () => {
+      const player = new (window as any).Spotify.Player({
+        name: "Song Game Web Player",
+        getOAuthToken: (cb: (token: string) => void) => {
+          if (this.gameState?.spotifyAccessToken) {
+            cb(this.gameState.spotifyAccessToken.access_token);
+          } else {
+            console.error("Spotify access token not available");
+          }
+        },
+        volume: 0.5,
+      });
+
+      // Error handling
+      player.addListener(
+        "initialization_error",
+        ({ message }: { message: string }) => {
+          console.error(message);
+        }
+      );
+      player.addListener(
+        "authentication_error",
+        ({ message }: { message: string }) => {
+          console.error(message);
+        }
+      );
+      player.addListener(
+        "account_error",
+        ({ message }: { message: string }) => {
+          console.error(message);
+        }
+      );
+      player.addListener(
+        "playback_error",
+        ({ message }: { message: string }) => {
+          console.error(message);
+        }
+      );
+
+      // Playback status updates
+      player.addListener("player_state_changed", (state: any) => {
+        console.log(state);
+      });
+
+      // Ready
+      player.addListener("ready", ({ device_id }: { device_id: string }) => {
+        console.log("Ready with Device ID", device_id);
+      });
+
+      // Not Ready
+      player.addListener(
+        "not_ready",
+        ({ device_id }: { device_id: string }) => {
+          console.log("Device ID has gone offline", device_id);
+        }
+      );
+
+      // Connect to the player!
+      player.connect();
+    };
+
+    const script = document.createElement("script");
+    script.src = "https://sdk.scdn.co/spotify-player.js";
+    script.async = true;
+
+    document.body.appendChild(script);
   }
 
   broadcastGameState(gameState: GameState) {
