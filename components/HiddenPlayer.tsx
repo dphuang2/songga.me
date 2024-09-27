@@ -2,21 +2,33 @@ import { useEffect, useState } from "react";
 import { useGameStore } from "./DesktopClient";
 import { observer } from "mobx-react-lite";
 
+// Add this type declaration at the top of the file, outside of the component
+declare global {
+  interface Window {
+    player: any;
+    Spotify: {
+      Player: any;
+    };
+    onSpotifyWebPlaybackSDKReady: () => void;
+  }
+}
+
 const HiddenPlayer: React.FC = observer(() => {
   const gameStore = useGameStore();
-  const [player, setPlayer] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !window.player) {
       const script = document.createElement("script");
       script.src = "https://sdk.scdn.co/spotify-player.js";
       script.async = true;
 
       document.body.appendChild(script);
 
-      (window as any).onSpotifyWebPlaybackSDKReady = () => {
-        const newPlayer = new (window as any).Spotify.Player({
+      const initializePlayer = () => {
+        if (window.player) return; // Avoid creating multiple players
+
+        window.player = new window.Spotify.Player({
           name: "Song Game Web Player",
           getOAuthToken: (cb: (token: string) => void) => {
             if (gameStore.gameState?.spotifyAccessToken) {
@@ -29,25 +41,25 @@ const HiddenPlayer: React.FC = observer(() => {
         });
 
         // Error handling
-        newPlayer.addListener(
+        window.player.addListener(
           "initialization_error",
           ({ message }: { message: string }) => {
             console.error(message);
           }
         );
-        newPlayer.addListener(
+        window.player.addListener(
           "authentication_error",
           ({ message }: { message: string }) => {
             console.error(message);
           }
         );
-        newPlayer.addListener(
+        window.player.addListener(
           "account_error",
           ({ message }: { message: string }) => {
             console.error(message);
           }
         );
-        newPlayer.addListener(
+        window.player.addListener(
           "playback_error",
           ({ message }: { message: string }) => {
             console.error(message);
@@ -55,7 +67,7 @@ const HiddenPlayer: React.FC = observer(() => {
         );
 
         // Playback status updates
-        newPlayer.addListener("player_state_changed", (state: any) => {
+        window.player.addListener("player_state_changed", (state: any) => {
           console.log(state);
           if (state) {
             setIsPlaying(!state.paused);
@@ -66,7 +78,7 @@ const HiddenPlayer: React.FC = observer(() => {
         });
 
         // Ready
-        newPlayer.addListener(
+        window.player.addListener(
           "ready",
           ({ device_id }: { device_id: string }) => {
             console.log("Ready with Device ID", device_id);
@@ -74,7 +86,7 @@ const HiddenPlayer: React.FC = observer(() => {
         );
 
         // Not Ready
-        newPlayer.addListener(
+        window.player.addListener(
           "not_ready",
           ({ device_id }: { device_id: string }) => {
             console.log("Device ID has gone offline", device_id);
@@ -82,21 +94,22 @@ const HiddenPlayer: React.FC = observer(() => {
         );
 
         // Connect to the player!
-        newPlayer.connect();
-
-        // Set the player in state
-        setPlayer(newPlayer);
+        window.player.connect();
       };
-    }
-  }, [gameStore]);
 
-  useEffect(() => {
+      if (window.Spotify) {
+        initializePlayer();
+      } else {
+        window.onSpotifyWebPlaybackSDKReady = initializePlayer;
+      }
+    }
+
     return () => {
-      if (player) {
-        player.disconnect();
+      if (window.player) {
+        window.player.disconnect();
       }
     };
-  }, [player]);
+  }, [gameStore]);
 
   return (
     <div className="fixed bottom-4 right-4 bg-black text-white px-3 py-1 rounded-full text-sm">
