@@ -705,6 +705,30 @@ export class GameStore {
         return;
       }
 
+      console.log("Fetching current playback state");
+      try {
+        const playbackState = await spotify.player.getPlaybackState();
+        if (playbackState) {
+          console.log("Current Playback State:");
+          console.log(`  Is Playing: ${playbackState.is_playing}`);
+          console.log(
+            `  Device: ${playbackState.device.name} (${playbackState.device.type})`
+          );
+          if (playbackState.item) {
+            console.log(`  Track: ${playbackState.item.name}`);
+            console.log(
+              `  Progress: ${playbackState.progress_ms}ms / ${playbackState.item.duration_ms}ms`
+            );
+          } else {
+            console.log("  No track currently playing");
+          }
+        } else {
+          console.log("No active playback state found");
+        }
+      } catch (error) {
+        console.error("Error fetching playback state:", error);
+      }
+
       console.log("Available devices:", devices.devices);
       devices.devices.forEach((device, index) => {
         console.log(`Device ${index + 1}:`);
@@ -717,12 +741,16 @@ export class GameStore {
         console.log(`  Volume Percent: ${device.volume_percent}`);
       });
 
+      const tvDevice = devices.devices.find((device) => device.type === "TV");
       const computerDevice = devices.devices.find(
         (device) => device.type === "Computer"
       );
       const activeDevice = devices.devices.find((device) => device.is_active);
       const targetDevice =
-        computerDevice?.id || activeDevice?.id || devices.devices[0].id;
+        activeDevice?.id ||
+        tvDevice?.id ||
+        computerDevice?.id ||
+        devices.devices[0].id;
 
       if (!targetDevice) {
         console.error("No device ID available");
