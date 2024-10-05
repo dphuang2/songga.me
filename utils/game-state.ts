@@ -15,12 +15,17 @@ import {
 const GUESS_EVENT = "guess";
 const IS_TYPING_EVENT = "is-typing";
 const GAME_EVENT = "game";
+const START_ROUND_EVENT = "start-round";
 const SYNC_EVENT = "sync";
 
 export const songSchema = z.object({
   name: z.string(),
   artist: z.string(),
   albumCoverImage: z.string(),
+});
+
+export const startRoundPayloadSchema = z.object({
+  song: songSchema,
 });
 
 export const guessStatusSchema = z.object({
@@ -604,8 +609,6 @@ export class GameStore {
       artist: track.artists.map((artist) => artist.name).join(", "),
       albumCoverImage: track.album.images[0]?.url || "",
     };
-    this.gameState.selectedSong = selectedSong;
-    this.gameState.lastSong = selectedSong;
     let retries = 0;
     const maxRetries = 5;
     while (!(await this.setPlayback(track)) && retries < maxRetries) {
@@ -615,7 +618,14 @@ export class GameStore {
     if (retries === maxRetries) {
       console.error("Failed to set playback after maximum retries");
     }
-    this.broadcastGameState(this.gameState);
+    const payload: z.infer<typeof startRoundPayloadSchema> = {
+      song: selectedSong,
+    };
+    this.gameRoom?.send({
+      type: "broadcast",
+      event: START_ROUND_EVENT,
+      payload: payload,
+    });
   }
 
   isCurrentRoundActive(): boolean {
@@ -854,8 +864,31 @@ export class GameStore {
      */
     this.gameRoom.on("broadcast", { event: GAME_EVENT }, ({ payload }) => {
       console.log("broadcast (game): ", payload);
-      this.setGameState(gameStatePayloadSchema.parse(payload).state);
+      const parsedPayload = gameStatePayloadSchema.parse(payload);
+      if (this.isHost() || parsedPayload.sender === "host") {
+        this.setGameState(parsedPayload.state);
+      }
     });
+
+    this.gameRoom.on(
+      "broadcast",
+      { event: START_ROUND_EVENT },
+      ({ payload }) => {
+        console.log("broadcast (start-round):", payload);
+        if (this.isHost() && this.gameState) {
+          const parsedPayload = startRoundPayloadSchema.parse(payload);
+          const selectedSong = parsedPayload.song;
+
+          this.gameState.selectedSong = selectedSong;
+          this.gameState.lastSong = selectedSong;
+
+          console.log("Updated game state with new song:", this.gameState);
+
+          // Broadcast the updated game state to all clients
+          this.broadcastGameState(this.gameState);
+        }
+      }
+    );
 
     this.gameRoom.on("broadcast", { event: IS_TYPING_EVENT }, ({ payload }) => {
       console.log("broadcast (is-typing):", payload);
@@ -1008,7 +1041,7 @@ export class GameStore {
     this.gameRoom.on("broadcast", { event: SYNC_EVENT }, () => {
       console.log("Received sync event");
       console.log("Current game state:", this.gameState);
-      if (this.gameState) {
+      if (this.gameState && this.isHost()) {
         this.broadcastGameState(this.gameState);
       }
     });
