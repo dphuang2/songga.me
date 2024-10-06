@@ -37,7 +37,7 @@ export const guessStatusSchema = z.object({
   correctSong: z.boolean(),
 });
 
-export const guessSchema = z
+export const guessSchemaSongOrArtist = z
   .object({
     type: z.enum(["song", "artist"]),
     value: z.string(),
@@ -45,6 +45,15 @@ export const guessSchema = z
     lastGuess: z.boolean(),
   })
   .merge(guessStatusSchema);
+
+export const guessSchemaSkip = z
+  .object({
+    type: z.literal("skip"),
+    teamId: z.number(),
+  })
+  .merge(guessStatusSchema);
+
+export const guessSchema = z.union([guessSchemaSongOrArtist, guessSchemaSkip]);
 
 export type Guess = z.infer<typeof guessSchema>;
 
@@ -92,6 +101,7 @@ export const gameStateSchema = z.object({
           .nullable(),
         isTyping: z.boolean(),
         outOfGuesses: z.boolean(),
+        skipped: z.boolean(),
         players: z.array(
           z.object({
             name: z.string(),
@@ -557,6 +567,7 @@ export class GameStore {
           correctSong: false,
           artistGuess: null,
           songGuess: null,
+          skipped: false,
         };
       });
 
@@ -959,6 +970,7 @@ export class GameStore {
             artistGuess: null,
             correctArtist: false,
             correctSong: false,
+            skipped: false,
           }));
 
           console.log(
@@ -990,128 +1002,145 @@ export class GameStore {
       const guess = guessSchema.parse(payload);
 
       if (this.isHost()) {
-        // Check if the guess is correct
-        const isCorrect = this.isGuessCorrect(guess.type, guess.value);
-
-        // Update the team's guess, correctness, and guesses left
-        const updatedTeams = this.gameState!.teams.map((team) => {
-          if (team.teamId === guess.teamId) {
-            return {
-              ...team,
-              [guess.type === "song" ? "songGuess" : "artistGuess"]:
-                guess.value,
-              correctArtist:
-                guess.type === "artist" ? isCorrect : team.correctArtist,
-              correctSong: guess.type === "song" ? isCorrect : team.correctSong,
-              guessesLeft: guess.guessesLeft,
-              isTyping: false, // Reset typing status after a guess
-            };
-          }
-          return team;
-        });
-
-        // Update the game state with the new teams
-        this.setGameStateTeams(updatedTeams);
-
-        // If the guess is correct, we'll handle additional logic (like scoring) in the next block
-        if (isCorrect) {
-          // Find the next available guessOrder
-          const nextGuessOrder = [1, 2, 3].find(
-            (order) =>
-              !this.gameState!.teams.some((team) => team.guessOrder === order)
-          ) as 1 | 2 | 3 | undefined;
-
-          console.log(`Processing correct guess for team ${guess.teamId}`);
-          let updatedTeams = this.gameState!.teams.map((team) => {
+        if (guess.type === "skip") {
+          // Update the team's guess, correctness, and guesses left
+          const updatedTeams = this.gameState!.teams.map((team) => {
             if (team.teamId === guess.teamId) {
-              console.log(`Updated team ${team.teamId}:`, team);
-              if (team.guessOrder !== null) {
-                console.log(
-                  `Second correct guess for team ${team.teamId}, awarding 2 points`
-                );
-                return {
-                  ...team,
-                  score: team.score + 2,
-                };
-              } else if (nextGuessOrder) {
-                console.log(`First correct guess for team ${team.teamId}`);
-                let pointsAwarded;
-                switch (nextGuessOrder) {
-                  case 1:
-                    pointsAwarded = 5;
-                    break;
-                  case 2:
-                    pointsAwarded = 3;
-                    break;
-                  case 3:
-                    pointsAwarded = 2;
-                    break;
-                  default:
-                    pointsAwarded = 0;
-                }
-                console.log(
-                  `Awarding ${pointsAwarded} points to team ${team.teamId} for guess order ${nextGuessOrder}`
-                );
-                return {
-                  ...team,
-                  guessOrder: nextGuessOrder,
-                  score: team.score + pointsAwarded,
-                };
-              }
-            } else {
-              console.log(`No changes for team ${team.teamId}`);
+              return {
+                ...team,
+                skipped: true,
+                isTyping: false, // Reset typing status after a guess
+              };
+            }
+            return team;
+          });
+          // Update the game state with the new teams
+          this.setGameStateTeams(updatedTeams);
+        } else {
+          // Check if the guess is correct
+          const isCorrect = this.isGuessCorrect(guess.type, guess.value);
+
+          // Update the team's guess, correctness, and guesses left
+          const updatedTeams = this.gameState!.teams.map((team) => {
+            if (team.teamId === guess.teamId) {
+              return {
+                ...team,
+                [guess.type === "song" ? "songGuess" : "artistGuess"]:
+                  guess.value,
+                correctArtist:
+                  guess.type === "artist" ? isCorrect : team.correctArtist,
+                correctSong:
+                  guess.type === "song" ? isCorrect : team.correctSong,
+                guessesLeft: guess.guessesLeft,
+                isTyping: false, // Reset typing status after a guess
+              };
             }
             return team;
           });
 
-          // If this is the first guess overall, award the picker 2 points
-          if (nextGuessOrder === 1) {
-            console.log("First guess made. Awarding 2 points to the picker.");
-            updatedTeams = updatedTeams.map((team) => {
-              if (this.isTeamPicker(team.teamId)) {
-                return {
-                  ...team,
-                  score: team.score + 2,
-                };
+          // Update the game state with the new teams
+          this.setGameStateTeams(updatedTeams);
+
+          // If the guess is correct, we'll handle additional logic (like scoring) in the next block
+          if (isCorrect) {
+            // Find the next available guessOrder
+            const nextGuessOrder = [1, 2, 3].find(
+              (order) =>
+                !this.gameState!.teams.some((team) => team.guessOrder === order)
+            ) as 1 | 2 | 3 | undefined;
+
+            console.log(`Processing correct guess for team ${guess.teamId}`);
+            let updatedTeams = this.gameState!.teams.map((team) => {
+              if (team.teamId === guess.teamId) {
+                console.log(`Updated team ${team.teamId}:`, team);
+                if (team.guessOrder !== null) {
+                  console.log(
+                    `Second correct guess for team ${team.teamId}, awarding 2 points`
+                  );
+                  return {
+                    ...team,
+                    score: team.score + 2,
+                  };
+                } else if (nextGuessOrder) {
+                  console.log(`First correct guess for team ${team.teamId}`);
+                  let pointsAwarded;
+                  switch (nextGuessOrder) {
+                    case 1:
+                      pointsAwarded = 5;
+                      break;
+                    case 2:
+                      pointsAwarded = 3;
+                      break;
+                    case 3:
+                      pointsAwarded = 2;
+                      break;
+                    default:
+                      pointsAwarded = 0;
+                  }
+                  console.log(
+                    `Awarding ${pointsAwarded} points to team ${team.teamId} for guess order ${nextGuessOrder}`
+                  );
+                  return {
+                    ...team,
+                    guessOrder: nextGuessOrder,
+                    score: team.score + pointsAwarded,
+                  };
+                }
+              } else {
+                console.log(`No changes for team ${team.teamId}`);
               }
               return team;
             });
-          }
 
-          // Use updateTeams method to update and broadcast the changes
-          this.setGameStateTeams(updatedTeams);
-        } else {
-          console.log(`Incorrect guess from team ${guess.teamId}`);
-
-          // If it's the last guess, mark the team as out of guesses if they're not in the top 3
-          if (this.gameState) {
-            if (guess.lastGuess) {
-              console.log(`Team ${guess.teamId} has made their last guess`);
-              const updatedTeams = this.gameState.teams.map((team) => {
-                if (team.teamId === guess.teamId) {
-                  // Only set outOfGuesses if the team's guessOrder is null
-                  if (team.guessOrder === null) {
-                    console.log(`Team ${guess.teamId} is out of guesses`);
-                    return {
-                      ...team,
-                      outOfGuesses: true,
-                    };
-                  }
+            // If this is the first guess overall, award the picker 2 points
+            if (nextGuessOrder === 1) {
+              console.log("First guess made. Awarding 2 points to the picker.");
+              updatedTeams = updatedTeams.map((team) => {
+                if (this.isTeamPicker(team.teamId)) {
+                  return {
+                    ...team,
+                    score: team.score + 2,
+                  };
                 }
                 return team;
               });
-              this.setGameStateTeams(updatedTeams);
             }
-          } else {
-            console.error(
-              "Game state is null when trying to process last guess"
-            );
-          }
-        }
 
-        // After processing the guess, check if the round is over
-        if (this.isRoundOver()) {
-          this.startCountdown();
+            // Use updateTeams method to update and broadcast the changes
+            this.setGameStateTeams(updatedTeams);
+          } else {
+            console.log(`Incorrect guess from team ${guess.teamId}`);
+
+            // If it's the last guess, mark the team as out of guesses if they're not in the top 3
+            if (this.gameState) {
+              if (guess.lastGuess) {
+                console.log(`Team ${guess.teamId} has made their last guess`);
+                const updatedTeams = this.gameState.teams.map((team) => {
+                  if (team.teamId === guess.teamId) {
+                    // Only set outOfGuesses if the team's guessOrder is null
+                    if (team.guessOrder === null) {
+                      console.log(`Team ${guess.teamId} is out of guesses`);
+                      return {
+                        ...team,
+                        outOfGuesses: true,
+                      };
+                    }
+                  }
+                  return team;
+                });
+                this.setGameStateTeams(updatedTeams);
+              }
+            } else {
+              console.error(
+                "Game state is null when trying to process last guess"
+              );
+            }
+          }
+
+          // After processing the guess, check if the round is over
+          if (this.isRoundOver()) {
+            this.startCountdown();
+          }
         }
       } else if (this.getTeamIdForCurrentPlayer() === guess.teamId) {
         // Update the team's guess status using setters
