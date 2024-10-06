@@ -325,7 +325,7 @@ const TeamScore = observer(
               <span className="text-xs sm:text-sm font-bold">Typing</span>
             </div>
           )}
-          {!picker && team.guessOrder && (
+          {team.guessOrder && !isWaitingForNextRound && (
             <div
               className={`absolute z-0 -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
                 team.guessOrder === 1
@@ -351,7 +351,9 @@ const TeamScore = observer(
           )}
           {isLeader && (
             <div className="absolute -top-4 -left-4 animate-bounce">
-              <span className="text-3xl sm:text-4xl">👑</span>
+              <span className="text-3xl sm:text-4xl transform -rotate-12 inline-block">
+                👑
+              </span>
             </div>
           )}
           {rankInfo && (
@@ -362,18 +364,30 @@ const TeamScore = observer(
             </div>
           )}
           {isWaitingForNextRound &&
-            (team.correctArtist || team.correctSong) && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-lime-300 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
-                <span className="text-lg relative z-10">
-                  {team.correctArtist && team.correctSong
-                    ? "🎯"
-                    : team.correctArtist
-                    ? "👤"
-                    : team.correctSong
-                    ? "🎵"
-                    : ""}
-                </span>
-                <div className="absolute inset-0 bg-lime-400 rounded-full opacity-50 transform scale-90"></div>
+            (team.correctArtist || team.correctSong || team.guessOrder) && (
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 flex items-center space-x-1">
+                {team.guessOrder && (
+                  <div className="bg-yellow-300 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
+                    <span className="text-lg font-bold relative z-10">
+                      {team.guessOrder}
+                    </span>
+                    <div className="absolute inset-0 bg-yellow-400 rounded-full opacity-50 transform scale-90"></div>
+                  </div>
+                )}
+                {(team.correctArtist || team.correctSong) && (
+                  <div className="bg-lime-300 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
+                    <span className="text-lg relative z-10">
+                      {team.correctArtist && team.correctSong
+                        ? "🎯"
+                        : team.correctArtist
+                        ? "👤"
+                        : team.correctSong
+                        ? "🎵"
+                        : ""}
+                    </span>
+                    <div className="absolute inset-0 bg-lime-400 rounded-full opacity-50 transform scale-90"></div>
+                  </div>
+                )}
               </div>
             )}
         </div>
