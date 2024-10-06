@@ -745,7 +745,17 @@ export class GameStore {
   }
 
   currentScoreboardMessage(): string {
-    if (!this.isCurrentRoundActive()) return "Picker is choosing a song...";
+    if (!this.isCurrentRoundActive()) {
+      const pickerTeam = this.gameState?.teams.find((team) =>
+        this.isTeamPicker(team.teamId)
+      );
+      const pickerNames = pickerTeam?.players
+        .map((player) => player.name)
+        .join(", ");
+      return `${pickerNames} ${
+        pickerNames && pickerNames.includes(",") ? "are" : "is"
+      } choosing a song...`;
+    }
     if (this.isRoundOver() && this.countdown !== null) {
       return `Round over! Next round starting in ${this.countdown} seconds...`;
     }
