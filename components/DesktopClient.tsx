@@ -7,10 +7,11 @@ import { useEffect, useState, createContext, useContext } from "react";
 import { MusicIcon } from "./MusicIcon";
 import { observer } from "mobx-react-lite";
 import { FunFact } from "./FunFact";
-import { GameState, GameStore } from "@/utils/game-state";
+import { GameState, gameStateSchema, GameStore } from "@/utils/game-state";
 import { ShareThisCode } from "./ShareThisCode";
 import HiddenPlayer from "./HiddenPlayer";
 import Image from "next/image";
+import clsx from "clsx";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
@@ -22,6 +23,35 @@ const GameStoreProvider = ({
   gameCode: string;
 }) => {
   const [gameStore] = useState(() => new GameStore({ gameCode }));
+
+  useEffect(() => {
+    console.log("Attempting to load game state from local storage");
+    if (typeof window !== "undefined") {
+      console.log("Window is defined, proceeding with local storage access");
+      const savedState = localStorage.getItem(`gameState_${gameCode}`);
+      console.log("Saved state from local storage:", savedState);
+      if (savedState) {
+        try {
+          console.log("Parsing saved state");
+          const parsedState = JSON.parse(savedState);
+          console.log("Parsed state:", parsedState);
+          console.log("Validating parsed state with gameStateSchema");
+          const validatedState = gameStateSchema.parse(parsedState);
+          console.log("State validation successful");
+          gameStore.setGameState(validatedState);
+          console.log("Game state loaded from local storage:");
+          console.log(validatedState);
+        } catch (error) {
+          console.error("Error parsing or validating saved game state:", error);
+        }
+      } else {
+        console.log("No saved state found in local storage");
+      }
+    } else {
+      console.log("Window is undefined, skipping local storage access");
+    }
+  }, [gameCode, gameStore]);
+
   return (
     <GameStoreContext.Provider value={gameStore}>
       {children}
@@ -84,38 +114,9 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
       >
         Next Round
       </button>
-      <div className="relative bg-white border-8 border-black rounded-3xl p-6 w-full max-w-4xl transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
-        <div className="absolute -top-8 -left-8 bg-red-500 w-16 h-16 rounded-full border-t-4 border-l-4 border-r-8 border-b-8 border-black flex items-center justify-center">
-          <MusicIcon />
-        </div>
-        {!gameStore.isCurrentRoundActive() && gameStore.gameState.lastSong && (
-          <div className="absolute top-4 right-4 bg-blue-300 border-2 border-black p-3 rounded-lg transform rotate-1 shadow-md hover:shadow-lg transition-shadow duration-300 max-w-[300px]">
-            <div className="flex items-center space-x-3">
-              {gameStore.gameState.lastSong.albumCoverImage && (
-                <div className="w-16 h-16 relative flex-shrink-0">
-                  <Image
-                    src={gameStore.gameState.lastSong.albumCoverImage}
-                    alt="Album Cover"
-                    className="object-cover w-full h-full rounded-md border-2 border-black"
-                    width={64}
-                    height={64}
-                    sizes="64px"
-                  />
-                </div>
-              )}
-              <div className="text-left overflow-hidden">
-                <p className="text-base font-bold break-words">
-                  {gameStore.gameState.lastSong.name}
-                </p>
-                <p className="text-sm text-gray-700 break-words">
-                  {gameStore.gameState.lastSong.artist}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        <div className="mb-6 border-b-8 border-black pb-4">
-          <div className="flex items-center gap-4 mb-4">
+      <div className="bg-white border-8 border-black rounded-3xl p-6 w-full max-w-4xl transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-4">
             <h2 className="text-4xl sm:text-5xl font-black uppercase bg-purple-300 px-4 py-2 rounded-xl border-4 border-black transform -rotate-2">
               Round
             </h2>
@@ -123,6 +124,34 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
               {gameStore.gameState.round}
             </div>
           </div>
+          {gameStore.isWaitingForNextRound() && (
+            <div className="bg-blue-300 border-2 border-black p-3 rounded-lg transform rotate-1 shadow-md hover:shadow-lg transition-shadow duration-300 max-w-[300px]">
+              <div className="flex items-center space-x-3">
+                {gameStore.gameState.lastSong.albumCoverImage && (
+                  <div className="w-16 h-16 relative flex-shrink-0">
+                    <Image
+                      src={gameStore.gameState.lastSong.albumCoverImage}
+                      alt="Album Cover"
+                      className="object-cover w-full h-full rounded-md border-2 border-black"
+                      width={64}
+                      height={64}
+                      sizes="64px"
+                    />
+                  </div>
+                )}
+                <div className="text-left overflow-hidden">
+                  <p className="text-base font-bold break-words">
+                    {gameStore.gameState.lastSong.name}
+                  </p>
+                  <p className="text-sm text-gray-700 break-words">
+                    {gameStore.gameState.lastSong.artist}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-between items-start mb-6 border-b-8 border-black pb-4">
           <div className="bg-blue-400 border-4 border-black px-4 sm:px-6 py-2 sm:py-3 text-xl sm:text-2xl font-black uppercase rounded-xl inline-block transform -rotate-1 relative">
             {gameStore.currentScoreboardMessage()}
             {gameStore.connectedToGameRoom() &&
@@ -132,6 +161,11 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
                 </div>
               )}
           </div>
+          {gameStore.isWaitingForNextRound() && (
+            <div className="max-w-[300px]">
+              <IncorrectGuessesList />
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {sortedTeams.map((team, index) => (
@@ -142,11 +176,63 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
               isLeader={index === 0 && !gameStore.allScoresAreSame()}
               allScoresAreSame={gameStore.allScoresAreSame()}
               picker={gameStore.isTeamPicker(team.teamId)}
+              isWaitingForNextRound={gameStore.isWaitingForNextRound()}
             />
           ))}
         </div>
-        <FunFact />
       </div>
+    </div>
+  );
+});
+
+const IncorrectGuessesList = observer(() => {
+  const gameStore = useGameStore();
+  const teams = gameStore.gameState?.teams || [];
+
+  const incorrectGuesses = teams.flatMap((team) =>
+    [
+      !team.correctArtist && team.artistGuess
+        ? {
+            teamName: team.players.map((p) => p.name).join(", "),
+            guess: team.artistGuess,
+            type: "artist",
+          }
+        : null,
+      !team.correctSong && team.songGuess
+        ? {
+            teamName: team.players.map((p) => p.name).join(", "),
+            guess: team.songGuess,
+            type: "song",
+          }
+        : null,
+    ].filter((guess): guess is NonNullable<typeof guess> => guess !== null)
+  );
+
+  return (
+    <div className="bg-red-400 border-4 border-black rounded-lg p-2 transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-sm relative">
+      <div className="absolute -top-4 -left-5 w-8 h-8 bg-red-300 rounded-full border-2 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
+        <span className="text-lg -rotate-6" role="img" aria-label="Incorrect">
+          👎
+        </span>
+      </div>
+      {incorrectGuesses.length === 0 ? (
+        <p className="text-gray-700 text-sm font-bold bg-yellow-200 border-2 border-black p-1 rounded mt-4">
+          No incorrect guesses yet
+        </p>
+      ) : (
+        <ul className="space-y-1">
+          {incorrectGuesses.map((guess, index) => (
+            <li
+              key={index}
+              className="bg-red-300 border-2 border-black p-1 rounded text-xs transform -rotate-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+            >
+              <span className="font-bold">{guess.teamName}:</span>{" "}
+              <span className="font-semibold">{guess.guess}</span>{" "}
+              <span>({guess.type === "artist" ? "👤" : "🎵"})</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 });
@@ -158,12 +244,14 @@ const TeamScore = observer(
     allScoresAreSame,
     picker,
     team,
+    isWaitingForNextRound,
   }: {
     team: GameState["teams"][number];
     rank: number;
     isLeader: boolean;
     picker: boolean;
     allScoresAreSame: boolean;
+    isWaitingForNextRound: boolean;
   }) => {
     const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
 
@@ -197,81 +285,83 @@ const TeamScore = observer(
     };
 
     return (
-      <div
-        className={`${
-          team.bgColor
-        } border-4 border-black p-3 sm:p-4 rounded-xl ${rotation} relative transition-all duration-300
-        ${team.isTyping ? "scale-105 shadow-lg" : ""}
-        ${
-          team.guessOrder
-            ? "scale-105 shadow-lg ring-4 ring-emerald-500 ring-offset-2"
-            : ""
-        }
-        ${isLeader ? "shadow-[0_0_20px_5px_rgba(255,215,0,0.7)]" : ""}
-        ${
-          picker
-            ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-yellow-400"
-            : ""
-        }
-        ${team.outOfGuesses ? "opacity-40" : ""}`}
-      >
-        {picker && (
-          <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
-            Current Picker
-          </div>
-        )}
-        <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
-          <div className="text-lg sm:text-xl font-black">Score</div>
-          <div className="text-2xl sm:text-3xl font-black">{team.score}</div>
-        </div>
-        <div className="mt-2">
-          {team.players.map((player, index) => (
-            <div key={index} className="text-base sm:text-lg font-bold">
-              {player.name}
+      <div className={clsx("relative")}>
+        <div
+          className={`${
+            team.bgColor
+          } border-4 border-black p-3 sm:p-4 rounded-xl ${rotation} relative transition-all duration-300
+          ${team.isTyping ? "scale-105 shadow-lg" : ""}
+          ${
+            team.guessOrder
+              ? "scale-105 shadow-lg ring-4 ring-emerald-500 ring-offset-2"
+              : ""
+          }
+          ${isLeader ? "shadow-[0_0_20px_5px_rgba(255,215,0,0.7)]" : ""}
+          ${
+            picker
+              ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-yellow-400"
+              : ""
+          }
+          ${team.outOfGuesses ? "opacity-40" : ""}`}
+        >
+          {picker && (
+            <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
+              Current Picker
             </div>
-          ))}
-        </div>
-        {team.isTyping && (
-          <div className="absolute -top-2 -right-2 bg-orange-400 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black animate-shake">
-            <span className="text-xs sm:text-sm font-bold">Typing</span>
+          )}
+          <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
+            <div className="text-lg sm:text-xl font-black">Score</div>
+            <div className="text-2xl sm:text-3xl font-black">{team.score}</div>
           </div>
-        )}
-        {team.guessOrder && (
-          <div
-            className={`absolute -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
-              team.guessOrder === 1
-                ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110 border-b-4 border-r-4 shadow-[0_0_10px_4px_rgba(255,215,0,0.5)]"
-                : "bg-gradient-to-r from-yellow-300 to-green-400 border-b-4 border-r-4"
-            }`}
-          >
-            <span
-              className={`text-base sm:text-lg font-bold text-black ${
-                team.guessOrder === 1 ? "text-lg sm:text-xl" : ""
+          <div className="mt-2">
+            {team.players.map((player, index) => (
+              <div key={index} className="text-base sm:text-lg font-bold">
+                {player.name}
+              </div>
+            ))}
+          </div>
+          {team.isTyping && (
+            <div className="absolute -top-2 -right-2 bg-orange-400 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black animate-shake">
+              <span className="text-xs sm:text-sm font-bold">Typing</span>
+            </div>
+          )}
+          {team.guessOrder && (
+            <div
+              className={`absolute -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
+                team.guessOrder === 1
+                  ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110 border-b-4 border-r-4 shadow-[0_0_10px_4px_rgba(255,215,0,0.5)]"
+                  : "bg-gradient-to-r from-yellow-300 to-green-400 border-b-4 border-r-4"
               }`}
             >
-              {getGuessOrderLabel(team.guessOrder)} Correct
-            </span>
-          </div>
-        )}
-        {team.outOfGuesses && (
-          <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
-            <span className="text-xs sm:text-sm font-bold text-white">
-              Out of Guesses
-            </span>
-          </div>
-        )}
-        {isLeader && (
-          <div className="absolute -top-4 -left-4 animate-bounce">
-            <span className="text-3xl sm:text-4xl">👑</span>
-          </div>
-        )}
-        {rankInfo && (
-          <div
-            className={`${rankInfo.bg} rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border-2 border-black flex-shrink-0 absolute bottom-2 right-2`}
-          >
-            <span className="text-xl sm:text-2xl">{rankInfo.emoji}</span>
-          </div>
-        )}
+              <span
+                className={`text-base sm:text-lg font-bold text-black ${
+                  team.guessOrder === 1 ? "text-lg sm:text-xl" : ""
+                }`}
+              >
+                {getGuessOrderLabel(team.guessOrder)} Correct
+              </span>
+            </div>
+          )}
+          {team.outOfGuesses && (
+            <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
+              <span className="text-xs sm:text-sm font-bold text-white">
+                Out of Guesses
+              </span>
+            </div>
+          )}
+          {isLeader && (
+            <div className="absolute -top-4 -left-4 animate-bounce">
+              <span className="text-3xl sm:text-4xl">👑</span>
+            </div>
+          )}
+          {rankInfo && (
+            <div
+              className={`${rankInfo.bg} rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border-2 border-black flex-shrink-0 absolute bottom-2 right-2`}
+            >
+              <span className="text-xl sm:text-2xl">{rankInfo.emoji}</span>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

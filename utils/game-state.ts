@@ -140,20 +140,6 @@ export class GameStore {
     this.gameCode = gameCode;
     this.initializeGameRoom();
     this.initAudioContext();
-
-    // If host, try to load game state from local storage
-    if (this.isHost()) {
-      const savedState = localStorage.getItem(`gameState_${this.gameCode}`);
-      if (savedState) {
-        try {
-          const parsedState = JSON.parse(savedState);
-          this.gameState = gameStateSchema.parse(parsedState);
-          console.log("Game state loaded from local storage:", this.gameState);
-        } catch (error) {
-          console.error("Error parsing saved game state:", error);
-        }
-      }
-    }
   }
 
   getCurrentTeam(): GameState["teams"][number] | undefined {
@@ -167,7 +153,7 @@ export class GameStore {
     return team ? team.correctArtist : false;
   }
 
-  setCorrectArtist(value: boolean): void {
+  setOwnTeamCorrectArtist(value: boolean): void {
     const team = this.getCurrentTeam();
     if (team) {
       team.correctArtist = value;
@@ -179,7 +165,7 @@ export class GameStore {
     return team ? team.correctSong : false;
   }
 
-  setCorrectSong(value: boolean): void {
+  setOwnTeamCorrectSong(value: boolean): void {
     const team = this.getCurrentTeam();
     if (team) {
       team.correctSong = value;
@@ -191,7 +177,7 @@ export class GameStore {
     return team ? team.guessesLeft : { artist: 0, song: 0 };
   }
 
-  setGuessesLeft(guesses: { artist: number; song: number }): void {
+  setOwnTeamGuessesLeft(guesses: { artist: number; song: number }): void {
     const team = this.getCurrentTeam();
     if (team) {
       team.guessesLeft = guesses;
@@ -203,7 +189,7 @@ export class GameStore {
     return team ? team.artistGuess : null;
   }
 
-  setArtistGuess(guess: string): void {
+  setOwnTeamArtistGuess(guess: string): void {
     const team = this.getCurrentTeam();
     if (team) {
       team.artistGuess = guess;
@@ -215,7 +201,7 @@ export class GameStore {
     return team ? team.songGuess : null;
   }
 
-  setSongGuess(guess: string): void {
+  setOwnTeamSongGuess(guess: string): void {
     const team = this.getCurrentTeam();
     if (team) {
       team.songGuess = guess;
@@ -233,6 +219,15 @@ export class GameStore {
     );
   }
 
+  /**
+   * Determines if the current round of guessing is over.
+   * This is used to check if it's time to move to the next phase of the game (e.g., revealing answers, updating scores).
+   * Unlike isCurrentRoundActive, which checks if a round is in progress,
+   * this method specifically checks if the guessing phase of the current round has concluded.
+   * The round is over when either:
+   * 1. At least 3 teams (or all teams if less than 3) have made correct guesses, or
+   * 2. All non-picker teams have either made a correct guess or are out of guesses.
+   */
   isRoundOver(): boolean {
     if (!this.gameState) return false;
 
@@ -382,10 +377,6 @@ export class GameStore {
         guessOrder: null,
         isTyping: false,
         outOfGuesses: false,
-        artistGuess: null,
-        songGuess: null,
-        correctArtist: false,
-        correctSong: false,
         guessesLeft: { artist: 1, song: 1 },
       }));
 
@@ -730,6 +721,12 @@ export class GameStore {
     return this.gameState?.selectedSong !== null;
   }
 
+  isWaitingForNextRound(): this is {
+    gameState: { lastSong: NonNullable<GameState["lastSong"]> };
+  } {
+    return !this.isCurrentRoundActive() && this.gameState?.lastSong !== null;
+  }
+
   currentScoreboardMessage(): string {
     if (!this.isCurrentRoundActive()) return "Picker is choosing a song...";
     if (this.isRoundOver() && this.countdown !== null) {
@@ -944,7 +941,19 @@ export class GameStore {
           this.gameState.selectedSong = selectedSong;
           this.gameState.lastSong = selectedSong;
 
-          console.log("Updated game state with new song:", this.gameState);
+          // Reset songGuess and artistGuess for all teams
+          this.gameState.teams = this.gameState.teams.map((team) => ({
+            ...team,
+            songGuess: null,
+            artistGuess: null,
+            correctArtist: false,
+            correctSong: false,
+          }));
+
+          console.log(
+            "Updated game state with new song and reset guesses:",
+            this.gameState
+          );
 
           // Broadcast the updated game state to all clients
           this.broadcastGameState(this.gameState);
@@ -961,7 +970,7 @@ export class GameStore {
             ? { ...team, isTyping: parsedPayload.isTyping }
             : team
         );
-        this.updateTeams(updatedTeams);
+        this.setGameStateTeams(updatedTeams);
       }
     });
 
@@ -973,6 +982,27 @@ export class GameStore {
         // Check if the guess is correct
         const isCorrect = this.isGuessCorrect(guess.type, guess.value);
 
+        // Update the team's guess, correctness, and guesses left
+        const updatedTeams = this.gameState!.teams.map((team) => {
+          if (team.teamId === guess.teamId) {
+            return {
+              ...team,
+              [guess.type === "song" ? "songGuess" : "artistGuess"]:
+                guess.value,
+              correctArtist:
+                guess.type === "artist" ? isCorrect : team.correctArtist,
+              correctSong: guess.type === "song" ? isCorrect : team.correctSong,
+              guessesLeft: guess.guessesLeft,
+              isTyping: false, // Reset typing status after a guess
+            };
+          }
+          return team;
+        });
+
+        // Update the game state with the new teams
+        this.setGameStateTeams(updatedTeams);
+
+        // If the guess is correct, we'll handle additional logic (like scoring) in the next block
         if (isCorrect) {
           // Find the next available guessOrder
           const nextGuessOrder = [1, 2, 3].find(
@@ -983,16 +1013,6 @@ export class GameStore {
           console.log(`Processing correct guess for team ${guess.teamId}`);
           let updatedTeams = this.gameState!.teams.map((team) => {
             if (team.teamId === guess.teamId) {
-              console.log(`Matching team found: ${team.teamId}`);
-              // Update correctArtist, correctSong, and guessesLeft using setters
-              console.log(`Updating team ${team.teamId} with guess results:`, {
-                correctArtist: guess.correctArtist,
-                correctSong: guess.correctSong,
-                guessesLeft: guess.guessesLeft,
-              });
-              team.correctArtist = guess.correctArtist;
-              team.correctSong = guess.correctSong;
-              team.guessesLeft = guess.guessesLeft;
               console.log(`Updated team ${team.teamId}:`, team);
               if (team.guessOrder !== null) {
                 console.log(
@@ -1048,14 +1068,14 @@ export class GameStore {
           }
 
           // Use updateTeams method to update and broadcast the changes
-          this.updateTeams(updatedTeams);
+          this.setGameStateTeams(updatedTeams);
         } else {
           console.log(`Incorrect guess from team ${guess.teamId}`);
 
           // If it's the last guess, mark the team as out of guesses if they're not in the top 3
-          if (guess.lastGuess) {
-            console.log(`Team ${guess.teamId} has made their last guess`);
-            if (this.gameState) {
+          if (this.gameState) {
+            if (guess.lastGuess) {
+              console.log(`Team ${guess.teamId} has made their last guess`);
               const updatedTeams = this.gameState.teams.map((team) => {
                 if (team.teamId === guess.teamId) {
                   // Only set outOfGuesses if the team's guessOrder is null
@@ -1069,12 +1089,12 @@ export class GameStore {
                 }
                 return team;
               });
-              this.updateTeams(updatedTeams);
-            } else {
-              console.error(
-                "Game state is null when trying to process last guess"
-              );
+              this.setGameStateTeams(updatedTeams);
             }
+          } else {
+            console.error(
+              "Game state is null when trying to process last guess"
+            );
           }
         }
 
@@ -1084,13 +1104,13 @@ export class GameStore {
         }
       } else if (this.getTeamIdForCurrentPlayer() === guess.teamId) {
         // Update the team's guess status using setters
-        this.setCorrectArtist(guess.correctArtist);
-        this.setCorrectSong(guess.correctSong);
-        this.setGuessesLeft(guess.guessesLeft);
+        this.setOwnTeamCorrectArtist(guess.correctArtist);
+        this.setOwnTeamCorrectSong(guess.correctSong);
+        this.setOwnTeamGuessesLeft(guess.guessesLeft);
         if (guess.type === "artist") {
-          this.setArtistGuess(guess.value);
+          this.setOwnTeamArtistGuess(guess.value);
         } else if (guess.type === "song") {
-          this.setSongGuess(guess.value);
+          this.setOwnTeamSongGuess(guess.value);
         }
 
         console.log(`Updated guess status for team ${guess.teamId}`);
@@ -1119,7 +1139,7 @@ export class GameStore {
     });
   }
 
-  updateTeams(updatedTeams: GameState["teams"]) {
+  setGameStateTeams(updatedTeams: GameState["teams"]) {
     if (!this.gameState) {
       throw new Error("Game state is not initialized");
     }

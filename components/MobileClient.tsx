@@ -328,9 +328,9 @@ const Guesser = observer(() => {
   useEffect(() => {
     // Reset all state when a new round starts
     const resetState = () => {
-      gameState.setGuessesLeft({ artist: 1, song: 1 });
-      gameState.setCorrectArtist(false);
-      gameState.setCorrectSong(false);
+      gameState.setOwnTeamGuessesLeft({ artist: 1, song: 1 });
+      gameState.setOwnTeamCorrectArtist(false);
+      gameState.setOwnTeamCorrectSong(false);
       setArtistSearch("");
       setSongSearch("");
       setArtistResults([]);
@@ -407,16 +407,16 @@ const Guesser = observer(() => {
       ...gameState.guessesLeft(),
       [type]: Math.max(0, gameState.guessesLeft()[type] - 1),
     };
-    gameState.setGuessesLeft(newGuessesLeft);
+    gameState.setOwnTeamGuessesLeft(newGuessesLeft);
     gameState.sendIsTyping(false);
 
     const isCorrect = gameState.isGuessCorrect(type, guessValue);
 
     if (isCorrect) {
       if (type === "artist") {
-        gameState.setCorrectArtist(true);
+        gameState.setOwnTeamCorrectArtist(true);
       } else {
-        gameState.setCorrectSong(true);
+        gameState.setOwnTeamCorrectSong(true);
       }
     }
 
