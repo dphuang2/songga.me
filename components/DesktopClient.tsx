@@ -115,51 +115,51 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
         Next Round
       </button>
       <div className="bg-white border-8 border-black rounded-3xl p-6 w-full max-w-4xl transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-4">
-            <h2 className="text-4xl sm:text-5xl font-black uppercase bg-purple-300 px-4 py-2 rounded-xl border-4 border-black transform -rotate-2">
-              Round
-            </h2>
-            <div className="bg-green-400 border-4 border-black w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-3xl sm:text-4xl font-black rounded-xl transform rotate-3">
-              {gameStore.gameState.round}
-            </div>
-          </div>
-          {gameStore.isWaitingForNextRound() && (
-            <div className="bg-blue-300 border-2 border-black p-3 rounded-lg transform rotate-1 shadow-md hover:shadow-lg transition-shadow duration-300 max-w-[300px]">
-              <div className="flex items-center space-x-3">
-                {gameStore.gameState.lastSong.albumCoverImage && (
-                  <div className="w-16 h-16 relative flex-shrink-0">
-                    <Image
-                      src={gameStore.gameState.lastSong.albumCoverImage}
-                      alt="Album Cover"
-                      className="object-cover w-full h-full rounded-md border-2 border-black"
-                      width={64}
-                      height={64}
-                      sizes="64px"
-                    />
-                  </div>
-                )}
-                <div className="text-left overflow-hidden">
-                  <p className="text-base font-bold break-words">
-                    {gameStore.gameState.lastSong.name}
-                  </p>
-                  <p className="text-sm text-gray-700 break-words">
-                    {gameStore.gameState.lastSong.artist}
-                  </p>
-                </div>
+        <div className="flex justify-between items-start mb-6 border-b-8 border-black pb-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <h2 className="text-4xl sm:text-5xl font-black uppercase bg-purple-300 px-4 py-2 rounded-xl border-4 border-black transform -rotate-2">
+                Round
+              </h2>
+              <div className="bg-green-400 border-4 border-black w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-3xl sm:text-4xl font-black rounded-xl transform rotate-3">
+                {gameStore.gameState.round}
               </div>
             </div>
-          )}
-        </div>
-        <div className="flex justify-between items-start mb-6 border-b-8 border-black pb-4">
-          <div className="bg-blue-400 border-4 border-black px-4 sm:px-6 py-2 sm:py-3 text-xl sm:text-2xl font-black uppercase rounded-xl inline-block transform -rotate-1 relative">
-            {gameStore.currentScoreboardMessage()}
-            {gameStore.connectedToGameRoom() &&
-              gameStore.isCurrentRoundActive() && (
-                <div className="absolute -top-8 -right-5 bg-yellow-300 border-4 border-black rounded-full p-1 transform rotate-3 shadow-[4px_4px_0_0_rgba(0,0,0,1)] animate-shake">
-                  <span className="text-3xl">🗣️</span>
+            <div className="bg-blue-400 border-4 border-black px-4 sm:px-6 py-2 sm:py-3 text-xl sm:text-2xl font-black uppercase rounded-xl inline-block transform -rotate-1 relative">
+              {gameStore.currentScoreboardMessage()}
+              {gameStore.connectedToGameRoom() &&
+                gameStore.isCurrentRoundActive() && (
+                  <div className="absolute -top-8 -right-5 bg-yellow-300 border-4 border-black rounded-full p-1 transform rotate-3 shadow-[4px_4px_0_0_rgba(0,0,0,1)] animate-shake">
+                    <span className="text-3xl">🗣️</span>
+                  </div>
+                )}
+            </div>
+            {gameStore.isWaitingForNextRound() && (
+              <div className="bg-blue-300 border-2 border-black p-3 rounded-lg transform rotate-1 shadow-md hover:shadow-lg transition-shadow duration-300 max-w-[300px]">
+                <div className="flex items-center space-x-3">
+                  {gameStore.gameState.lastSong.albumCoverImage && (
+                    <div className="w-16 h-16 relative flex-shrink-0">
+                      <Image
+                        src={gameStore.gameState.lastSong.albumCoverImage}
+                        alt="Album Cover"
+                        className="object-cover w-full h-full rounded-md border-2 border-black"
+                        width={64}
+                        height={64}
+                        sizes="64px"
+                      />
+                    </div>
+                  )}
+                  <div className="text-left overflow-hidden">
+                    <p className="text-base font-bold break-words">
+                      {gameStore.gameState.lastSong.name}
+                    </p>
+                    <p className="text-sm font-medium text-gray-700 break-words">
+                      {gameStore.gameState.lastSong.artist}
+                    </p>
+                  </div>
                 </div>
-              )}
+              </div>
+            )}
           </div>
           {gameStore.isWaitingForNextRound() && (
             <div className="max-w-[300px]">
@@ -209,26 +209,28 @@ const IncorrectGuessesList = observer(() => {
   );
 
   return (
-    <div className="bg-red-400 border-4 border-black rounded-lg p-2 transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-sm relative">
-      <div className="absolute -top-4 -left-5 w-8 h-8 bg-red-300 rounded-full border-2 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-        <span className="text-lg -rotate-6" role="img" aria-label="Incorrect">
+    <div className="bg-red-400 border-4 border-black rounded-lg p-2 transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-base relative">
+      <div className="absolute -top-4 -left-5 w-10 h-10 bg-red-200 rounded-lg border-2 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)] z-20 transform -rotate-3">
+        <span className="text-xl -rotate-6" role="img" aria-label="Incorrect">
           👎
         </span>
       </div>
       {incorrectGuesses.length === 0 ? (
-        <p className="text-gray-700 text-sm font-bold bg-yellow-200 border-2 border-black p-1 rounded mt-4">
+        <p className="text-black text-base font-bold bg-yellow-200 border-2 border-black p-2 rounded mt-4 shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
           No incorrect guesses yet
         </p>
       ) : (
-        <ul className="space-y-1">
+        <ul className="space-y-1 relative z-10">
           {incorrectGuesses.map((guess, index) => (
             <li
               key={index}
-              className="bg-red-300 border-2 border-black p-1 rounded text-xs transform -rotate-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+              className="bg-red-300 border-2 border-black p-1 rounded text-sm transform -rotate-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
             >
-              <span className="font-bold">{guess.teamName}:</span>{" "}
-              <span className="font-semibold">{guess.guess}</span>{" "}
-              <span>({guess.type === "artist" ? "👤" : "🎵"})</span>
+              <span className="text-red-800">{guess.teamName}:</span>{" "}
+              <span className="font-semibold text-red-950">{guess.guess}</span>{" "}
+              <span className="text-gray-500 text-xs italic">
+                ({guess.type === "artist" ? "👤" : "🎵"})
+              </span>
             </li>
           ))}
         </ul>
