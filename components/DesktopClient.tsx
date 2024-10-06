@@ -208,6 +208,10 @@ const IncorrectGuessesList = observer(() => {
     ].filter((guess): guess is NonNullable<typeof guess> => guess !== null)
   );
 
+  if (incorrectGuesses.length === 0) {
+    return null;
+  }
+
   return (
     <div className="bg-red-400 border-4 border-black rounded-lg p-2 transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-base relative">
       <div className="absolute -top-4 -right-5 w-10 h-10 bg-red-200 rounded-lg border-2 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)] z-20 transform rotate-3">
@@ -215,26 +219,20 @@ const IncorrectGuessesList = observer(() => {
           👀
         </span>
       </div>
-      {incorrectGuesses.length === 0 ? (
-        <p className="text-black text-base font-bold bg-yellow-200 border-2 border-black p-2 rounded mt-4 shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-          No incorrect guesses yet
-        </p>
-      ) : (
-        <ul className="space-y-1 relative z-10">
-          {incorrectGuesses.map((guess, index) => (
-            <li
-              key={index}
-              className="bg-red-300 border-2 border-black p-1 rounded text-sm transform -rotate-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
-            >
-              <span className="text-red-800">{guess.teamName}:</span>{" "}
-              <span className="font-semibold text-red-950">{guess.guess}</span>{" "}
-              <span className="text-gray-500 text-xs italic">
-                ({guess.type === "artist" ? "👤" : "🎵"})
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="space-y-1 relative z-10">
+        {incorrectGuesses.map((guess, index) => (
+          <li
+            key={index}
+            className="bg-red-300 border-2 border-black p-1 rounded text-sm transform -rotate-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+          >
+            <span className="text-red-800">{guess.teamName}:</span>{" "}
+            <span className="font-semibold text-red-950">{guess.guess}</span>{" "}
+            <span className="text-gray-500 text-xs italic">
+              ({guess.type === "artist" ? "👤" : "🎵"})
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 });
