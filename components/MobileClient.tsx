@@ -17,6 +17,7 @@ import { FunFact } from "./FunFact";
 import debounce from "debounce";
 import { Track } from "@spotify/web-api-ts-sdk";
 import Image from "next/image";
+import clsx from "clsx";
 
 const GameStoreContext = createContext<GameStore | null>(null);
 
@@ -326,6 +327,11 @@ const Guesser = observer(() => {
   const songSearchRef = useRef("");
 
   useEffect(() => {
+    // Send sync event when component mounts
+    gameState.sendSyncEvent();
+  }, []);
+
+  useEffect(() => {
     // Reset all state when a new round starts
     const resetState = () => {
       gameState.setOwnTeamGuessesLeft({ artist: 1, song: 1 });
@@ -441,6 +447,32 @@ const Guesser = observer(() => {
       songSearchRef.current = guessValue;
     }
   };
+
+  const handleSkip = useCallback(() => {
+    console.log("Skipping guesses");
+    gameState.setOwnTeamGuessesLeft({ artist: 0, song: 0 });
+    gameState.sendIsTyping(false);
+    gameState.setOwnTeamSkipped(true);
+
+    gameState.sendGuess({
+      type: "skip",
+    });
+
+    setArtistSearch("");
+    setSongSearch("");
+    setArtistResults([]);
+    setSongResults([]);
+    artistSearchRef.current = "";
+    songSearchRef.current = "";
+  }, [
+    gameState,
+    setArtistSearch,
+    setSongSearch,
+    setArtistResults,
+    setSongResults,
+    artistSearchRef,
+    songSearchRef,
+  ]);
 
   const updateSearch = (type: "artist" | "song", value: string) => {
     if (type === "artist") {
@@ -568,6 +600,34 @@ const Guesser = observer(() => {
           handleGuess={handleGuess}
           isSearching={isSearchingSong}
         />
+
+        <button
+          className={clsx(
+            "w-full bg-red-500 text-white text-xl font-bold py-3 px-6 rounded-xl border-4 border-black transition-colors mt-4 transform rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] border-b-[8px] border-r-[8px]",
+            {
+              "opacity-50 cursor-not-allowed":
+                gameState.guessesLeft().artist === 0 &&
+                gameState.guessesLeft().song === 0,
+              "hover:bg-red-700 active:translate-y-1 active:shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:border-b-4 active:border-r-4":
+                gameState.guessesLeft().artist > 0 ||
+                gameState.guessesLeft().song > 0,
+            }
+          )}
+          onClick={() => {
+            if (
+              gameState.guessesLeft().artist > 0 ||
+              gameState.guessesLeft().song > 0
+            ) {
+              handleSkip();
+            }
+          }}
+          disabled={
+            gameState.guessesLeft().artist === 0 &&
+            gameState.guessesLeft().song === 0
+          }
+        >
+          Skip
+        </button>
       </div>
     </div>
   );

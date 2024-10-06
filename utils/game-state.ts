@@ -195,6 +195,18 @@ export class GameStore {
     }
   }
 
+  skipped(): boolean {
+    const team = this.getCurrentTeam();
+    return team ? team.skipped : false;
+  }
+
+  setOwnTeamSkipped(value: boolean): void {
+    const team = this.getCurrentTeam();
+    if (team) {
+      team.skipped = value;
+    }
+  }
+
   artistGuess(): string | null {
     const team = this.getCurrentTeam();
     return team ? team.artistGuess : null;
@@ -237,25 +249,43 @@ export class GameStore {
    * this method specifically checks if the guessing phase of the current round has concluded.
    * The round is over when either:
    * 1. At least 3 teams (or all teams if less than 3) have made correct guesses, or
-   * 2. All non-picker teams have either made a correct guess or are out of guesses.
+   * 2. All non-picker teams have either made a correct guess, are out of guesses, or have skipped.
    */
   isRoundOver(): boolean {
-    if (!this.gameState) return false;
+    if (!this.gameState) {
+      console.log("isRoundOver: Game state is not initialized");
+      return false;
+    }
 
     const nonPickerTeams = this.allNonPickerTeams();
-    const teamsWithGuesses = nonPickerTeams.filter(
+    console.log("isRoundOver: Non-picker teams:", nonPickerTeams);
+
+    const teamsWithCorrectGuesses = nonPickerTeams.filter(
       (team) => team.guessOrder !== null
     );
-    const teamsOutOfGuesses = nonPickerTeams.filter(
-      (team) => team.outOfGuesses
+    console.log(
+      "isRoundOver: Teams with correct guesses:",
+      teamsWithCorrectGuesses
     );
-    const minRequiredGuesses = Math.min(nonPickerTeams.length, 3);
 
-    return (
-      teamsWithGuesses.length >= minRequiredGuesses ||
-      teamsWithGuesses.length + teamsOutOfGuesses.length ===
-        nonPickerTeams.length
+    const teamsOutOfGuessesOrSkipped = nonPickerTeams.filter(
+      (team) => team.outOfGuesses || team.skipped
     );
+    console.log(
+      "isRoundOver: Teams out of guesses or skipped:",
+      teamsOutOfGuessesOrSkipped
+    );
+
+    const minRequiredGuesses = Math.min(nonPickerTeams.length, 3);
+    console.log("isRoundOver: Minimum required guesses:", minRequiredGuesses);
+
+    const isRoundOver =
+      teamsWithCorrectGuesses.length >= minRequiredGuesses ||
+      teamsWithCorrectGuesses.length + teamsOutOfGuessesOrSkipped.length ===
+        nonPickerTeams.length;
+
+    console.log("isRoundOver: Round is over?", isRoundOver);
+    return isRoundOver;
   }
 
   sendGuess(input: Omit<Guess, "teamId">) {
@@ -386,7 +416,6 @@ export class GameStore {
       const updatedTeams = this.gameState.teams.map((team, index) => ({
         ...team,
         isTyping: false,
-        outOfGuesses: false,
         guessesLeft: { artist: 1, song: 1 },
         wasPicker: index === this.gameState?.pickerIndex,
       }));
@@ -977,6 +1006,17 @@ export class GameStore {
     return this.gameState.teams.some((team) => team.guessOrder !== null);
   }
 
+  sendSyncEvent() {
+    if (this.gameRoom) {
+      this.gameRoom.send({
+        type: "broadcast",
+        event: SYNC_EVENT,
+      });
+    } else {
+      console.error("Game room is not initialized");
+    }
+  }
+
   /**
    * Connect the client to the game room channel
    */
@@ -1061,7 +1101,8 @@ export class GameStore {
             if (team.teamId === guess.teamId) {
               return {
                 ...team,
-                skipped: true,
+                skipped: team.guessOrder === null ? true : team.skipped,
+                guessesLeft: { artist: 0, song: 0 },
                 isTyping: false, // Reset typing status after a guess
               };
             }
@@ -1189,11 +1230,10 @@ export class GameStore {
               );
             }
           }
-
-          // After processing the guess, check if the round is over
-          if (this.isRoundOver()) {
-            this.startCountdown();
-          }
+        }
+        // After processing the guess, check if the round is over
+        if (this.isRoundOver()) {
+          this.startCountdown();
         }
       } else if (this.getTeamIdForCurrentPlayer() === guess.teamId) {
         if (guess.type === "artist" || guess.type === "song") {
@@ -1228,10 +1268,7 @@ export class GameStore {
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
           console.log("Tab became visible, sending sync event");
-          this.gameRoom?.send({
-            type: "broadcast",
-            event: SYNC_EVENT,
-          });
+          this.sendSyncEvent();
         }
       });
     }
@@ -1239,10 +1276,7 @@ export class GameStore {
     this.gameRoom.subscribe((status) => {
       console.log(status);
       if (status === "SUBSCRIBED") {
-        this.gameRoom?.send({
-          type: "broadcast",
-          event: SYNC_EVENT,
-        });
+        this.sendSyncEvent();
       }
     });
   }

@@ -308,7 +308,11 @@ const TeamScore = observer(
               ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-yellow-400"
               : ""
           }
-          ${team.outOfGuesses ? "opacity-40" : ""}`}
+          ${
+            !isWaitingForNextRound && (team.outOfGuesses || team.skipped)
+              ? "opacity-40"
+              : ""
+          }`}
         >
           {picker && (
             <div className="absolute z-10 -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
@@ -360,10 +364,17 @@ const TeamScore = observer(
               </span>
             </div>
           )}
-          {team.outOfGuesses && (
-            <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
+          {!isWaitingForNextRound && team.outOfGuesses && (
+            <div className="absolute -top-2 -right-2 bg-red-500 rotate-6 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
               <span className="text-xs sm:text-sm font-bold text-white">
                 Out of Guesses
+              </span>
+            </div>
+          )}
+          {!isWaitingForNextRound && team.skipped && (
+            <div className="absolute -top-2 -right-2 bg-red-500 rotate-6 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
+              <span className="text-xs sm:text-sm font-bold text-white">
+                Skipped
               </span>
             </div>
           )}
@@ -382,7 +393,10 @@ const TeamScore = observer(
             </div>
           )}
           {isWaitingForNextRound &&
-            (team.correctArtist || team.correctSong || team.guessOrder) && (
+            (team.correctArtist ||
+              team.correctSong ||
+              team.guessOrder ||
+              team.skipped) && (
               <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 flex items-center space-x-1">
                 {team.guessOrder && (
                   <div className="bg-yellow-300 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
@@ -403,7 +417,11 @@ const TeamScore = observer(
                         ? "🎵"
                         : ""}
                     </span>
-                    <div className="absolute inset-0 bg-lime-400 rounded-full opacity-50 transform scale-90"></div>
+                  </div>
+                )}
+                {team.skipped && (
+                  <div className="bg-red-600 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
+                    <span className="text-lg relative z-10">⏭️</span>
                   </div>
                 )}
               </div>
