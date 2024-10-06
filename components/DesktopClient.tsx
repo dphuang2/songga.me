@@ -363,6 +363,21 @@ const TeamScore = observer(
               <span className="text-xl sm:text-2xl">{rankInfo.emoji}</span>
             </div>
           )}
+          {isWaitingForNextRound &&
+            (team.correctArtist || team.correctSong) && (
+              <div className="absolute top-[45%] -right-1 translate-x-1/2 -translate-y-1/2 bg-lime-300 rounded-full w-8 h-8 flex items-center justify-center border-2 border-black shadow-[0_4px_6px_rgba(0,0,0,0.1),0_2px_4px_rgba(0,0,0,0.06)]">
+                <span className="text-lg relative z-10">
+                  {team.correctArtist && team.correctSong
+                    ? "🎯"
+                    : team.correctArtist
+                    ? "👤"
+                    : team.correctSong
+                    ? "🎵"
+                    : ""}
+                </span>
+                <div className="absolute inset-0 bg-lime-400 rounded-full opacity-50 transform scale-90"></div>
+              </div>
+            )}
         </div>
       </div>
     );
