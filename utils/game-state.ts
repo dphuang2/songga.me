@@ -603,11 +603,77 @@ export class GameStore {
     if (type === "artist") {
       if (this.gameState?.selectedSong?.artist) {
         const artists = this.gameState.selectedSong.artist.split(", ");
-        return artists.some((artist) => artist === guess);
+        return artists.some(
+          (artist) => artist.toLowerCase() === guess.toLowerCase()
+        );
       }
     } else {
       if (this.gameState?.selectedSong?.name) {
-        return this.gameState.selectedSong.name === guess;
+        const selectedSongName = this.gameState.selectedSong.name.toLowerCase();
+        const guessLower = guess.toLowerCase();
+
+        // Remove common suffixes and prefixes
+        const cleanString = (str: string) => {
+          return str
+            .replace(
+              /(\s*-\s*(radio\s*version|album\s*version|remastered|live|acoustic|remix).*$)/i,
+              ""
+            )
+            .replace(/^\s*(the|a|an)\s+/i, "")
+            .trim();
+        };
+
+        const cleanSelectedSong = cleanString(selectedSongName);
+        const cleanGuess = cleanString(guessLower);
+
+        // Check for exact match after cleaning
+        if (cleanSelectedSong === cleanGuess) {
+          return true;
+        }
+
+        // Check if the guess is a substring of the selected song
+        if (cleanSelectedSong.includes(cleanGuess)) {
+          // Ensure the guess is not significantly shorter than the selected song
+          if (cleanGuess.length > cleanSelectedSong.length * 0.7) {
+            return true;
+          }
+        }
+
+        // Calculate Levenshtein distance
+        const levenshteinDistance = (a: string, b: string) => {
+          const matrix = [];
+          for (let i = 0; i <= b.length; i++) {
+            matrix[i] = [i];
+          }
+          for (let j = 0; j <= a.length; j++) {
+            matrix[0][j] = j;
+          }
+          for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+              if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+              } else {
+                matrix[i][j] = Math.min(
+                  matrix[i - 1][j - 1] + 1,
+                  matrix[i][j - 1] + 1,
+                  matrix[i - 1][j] + 1
+                );
+              }
+            }
+          }
+          return matrix[b.length][a.length];
+        };
+
+        // Calculate similarity as a percentage
+        const maxLength = Math.max(cleanSelectedSong.length, cleanGuess.length);
+        const distance = levenshteinDistance(cleanSelectedSong, cleanGuess);
+        const similarity = (maxLength - distance) / maxLength;
+
+        // Consider it correct if similarity is above 90% and lengths are similar
+        return (
+          similarity > 0.9 &&
+          Math.abs(cleanSelectedSong.length - cleanGuess.length) <= 3
+        );
       }
     }
     return false;
