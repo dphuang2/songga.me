@@ -115,7 +115,7 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
         Next Round
       </button>
       <div className="bg-white border-8 border-black rounded-3xl p-6 w-full max-w-4xl transform rotate-1 shadow-2xl border-b-[16px] border-r-[16px]">
-        <div className="flex justify-between items-start mb-6 border-b-8 border-black pb-4">
+        <div className="flex justify-between items-start mb-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <h2 className="text-4xl sm:text-5xl font-black uppercase bg-purple-300 px-4 py-2 rounded-xl border-4 border-black transform -rotate-2">
@@ -166,6 +166,9 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
               <IncorrectGuessesList />
             </div>
           )}
+        </div>
+        <div className="mt-4 mb-8 relative">
+          <div className="h-6 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 border-4 border-black rounded-lg shadow-[2px_2px_0_0_rgba(0,0,0,1)] transform flex items-center justify-center"></div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {sortedTeams.map((team, index) => (
