@@ -5,7 +5,7 @@ import { LiveIndicator } from "./LiveIndicator";
 import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
 import { Tables } from "@/utils/supabase/database.types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameStore } from "@/utils/game-state";
 import { MusicIcon } from "./MusicIcon";
 import { Artist } from "@spotify/web-api-ts-sdk";
@@ -322,6 +322,8 @@ const Guesser = observer(() => {
   const [isSearchingArtist, setIsSearchingArtist] = useState(false);
   const [isSearchingSong, setIsSearchingSong] = useState(false);
   const gameState = useGameStore();
+  const artistSearchRef = useRef("");
+  const songSearchRef = useRef("");
 
   useEffect(() => {
     // Reset all state when a new round starts
@@ -333,13 +335,15 @@ const Guesser = observer(() => {
       setSongSearch("");
       setArtistResults([]);
       setSongResults([]);
+      artistSearchRef.current = "";
+      songSearchRef.current = "";
     };
 
     resetState();
   }, [gameState.gameState?.round]);
 
   const handleSearch = useCallback(
-    debounce(async (type: "artist" | "song", query: string) => {
+    async (type: "artist" | "song", query: string) => {
       if (query.length === 0) {
         if (type === "artist") {
           setArtistResults([]);
@@ -365,11 +369,17 @@ const Guesser = observer(() => {
           5
         );
 
-        if (results) {
-          if (type === "artist" && results.artists) {
-            setArtistResults(results.artists.items);
-          } else if (type === "song" && results.tracks) {
-            setSongResults(results.tracks.items);
+        // Check if the query is still relevant
+        if (
+          query ===
+          (type === "artist" ? artistSearchRef.current : songSearchRef.current)
+        ) {
+          if (results) {
+            if (type === "artist" && results.artists) {
+              setArtistResults(results.artists.items);
+            } else if (type === "song" && results.tracks) {
+              setSongResults(results.tracks.items);
+            }
           }
         }
       } catch (error) {
@@ -381,8 +391,13 @@ const Guesser = observer(() => {
           setIsSearchingSong(false);
         }
       }
-    }, 300),
+    },
     [gameState]
+  );
+
+  const debouncedHandleSearch = useMemo(
+    () => debounce(handleSearch, 300),
+    [handleSearch]
   );
 
   const handleGuess = (type: "artist" | "song", item: Artist | Track) => {
@@ -419,10 +434,23 @@ const Guesser = observer(() => {
     if (type === "artist") {
       setArtistSearch(guessValue);
       setArtistResults([]);
+      artistSearchRef.current = guessValue;
     } else {
       setSongSearch(guessValue);
       setSongResults([]);
+      songSearchRef.current = guessValue;
     }
+  };
+
+  const updateSearch = (type: "artist" | "song", value: string) => {
+    if (type === "artist") {
+      setArtistSearch(value);
+      artistSearchRef.current = value;
+    } else {
+      setSongSearch(value);
+      songSearchRef.current = value;
+    }
+    debouncedHandleSearch(type, value);
   };
 
   if (!gameState.isCurrentRoundActive()) {
@@ -506,12 +534,18 @@ const Guesser = observer(() => {
         <SearchComponent
           type="artist"
           search={gameState.artistGuess() ?? artistSearch}
-          setSearch={setArtistSearch}
+          setSearch={(value: string | ((prevState: string) => string)) => {
+            if (typeof value === "function") {
+              setArtistSearch(value);
+              updateSearch("artist", value(artistSearch));
+            } else {
+              setArtistSearch(value);
+              updateSearch("artist", value);
+            }
+          }}
           results={artistResults}
           gameState={gameState}
-          handleSearch={(type, query) =>
-            handleSearch(type, query) as Promise<void>
-          }
+          handleSearch={handleSearch}
           handleGuess={handleGuess}
           isSearching={isSearchingArtist}
         />
@@ -519,12 +553,18 @@ const Guesser = observer(() => {
         <SearchComponent
           type="song"
           search={gameState.songGuess() ?? songSearch}
-          setSearch={setSongSearch}
+          setSearch={(value: string | ((prevState: string) => string)) => {
+            if (typeof value === "function") {
+              setSongSearch(value);
+              updateSearch("song", value(songSearch));
+            } else {
+              setSongSearch(value);
+              updateSearch("song", value);
+            }
+          }}
           results={songResults}
           gameState={gameState}
-          handleSearch={(type, query) =>
-            handleSearch(type, query) as Promise<void>
-          }
+          handleSearch={handleSearch}
           handleGuess={handleGuess}
           isSearching={isSearchingSong}
         />
