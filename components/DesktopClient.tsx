@@ -305,7 +305,7 @@ const TeamScore = observer(
           ${team.outOfGuesses ? "opacity-40" : ""}`}
         >
           {picker && (
-            <div className="absolute -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
+            <div className="absolute z-10 -top-6 -right-6 bg-purple-500 text-white px-2 py-1 rounded-full border-4 border-black font-bold text-xs sm:text-sm shadow-lg">
               Current Picker
             </div>
           )}
@@ -325,9 +325,9 @@ const TeamScore = observer(
               <span className="text-xs sm:text-sm font-bold">Typing</span>
             </div>
           )}
-          {team.guessOrder && (
+          {!picker && team.guessOrder && (
             <div
-              className={`absolute -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
+              className={`absolute z-0 -top-6 sm:-top-8 -right-2 sm:-right-4 rounded-full px-2 sm:px-3 py-1 border-2 border-black shadow-lg transform hover:scale-105 transition-all duration-300 ${
                 team.guessOrder === 1
                   ? "bg-gradient-to-r from-yellow-400 to-amber-500 scale-110 border-b-4 border-r-4 shadow-[0_0_10px_4px_rgba(255,215,0,0.5)]"
                   : "bg-gradient-to-r from-yellow-300 to-green-400 border-b-4 border-r-4"
