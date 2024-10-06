@@ -6,7 +6,7 @@ import { PlayerNameInput } from "./PlayerNameInput";
 import { GameProps } from "@/app/[game]/page";
 import { Tables } from "@/utils/supabase/database.types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GameStore } from "@/utils/game-state";
+import { GameStore, GuessSongOrArtist } from "@/utils/game-state";
 import { MusicIcon } from "./MusicIcon";
 import { Artist } from "@spotify/web-api-ts-sdk";
 
@@ -429,7 +429,7 @@ const Guesser = observer(() => {
       guessesLeft: gameState.guessesLeft(),
       correctArtist: gameState.correctArtist(),
       correctSong: gameState.correctSong(),
-    });
+    } as GuessSongOrArtist);
 
     if (type === "artist") {
       setArtistSearch(guessValue);

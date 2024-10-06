@@ -46,12 +46,12 @@ export const guessSchemaSongOrArtist = z
   })
   .merge(guessStatusSchema);
 
-export const guessSchemaSkip = z
-  .object({
-    type: z.literal("skip"),
-    teamId: z.number(),
-  })
-  .merge(guessStatusSchema);
+export type GuessSongOrArtist = z.infer<typeof guessSchemaSongOrArtist>;
+
+export const guessSchemaSkip = z.object({
+  type: z.literal("skip"),
+  teamId: z.number(),
+});
 
 export const guessSchema = z.union([guessSchemaSongOrArtist, guessSchemaSkip]);
 
@@ -1143,20 +1143,22 @@ export class GameStore {
           }
         }
       } else if (this.getTeamIdForCurrentPlayer() === guess.teamId) {
-        // Update the team's guess status using setters
-        this.setOwnTeamCorrectArtist(guess.correctArtist);
-        this.setOwnTeamCorrectSong(guess.correctSong);
-        this.setOwnTeamGuessesLeft(guess.guessesLeft);
-        if (guess.type === "artist") {
-          this.setOwnTeamArtistGuess(guess.value);
-        } else if (guess.type === "song") {
-          this.setOwnTeamSongGuess(guess.value);
-        }
+        if (guess.type === "artist" || guess.type === "song") {
+          // Update the team's guess status using setters
+          this.setOwnTeamCorrectArtist(guess.correctArtist);
+          this.setOwnTeamCorrectSong(guess.correctSong);
+          this.setOwnTeamGuessesLeft(guess.guessesLeft);
+          if (guess.type === "artist") {
+            this.setOwnTeamArtistGuess(guess.value);
+          } else if (guess.type === "song") {
+            this.setOwnTeamSongGuess(guess.value);
+          }
 
-        console.log(`Updated guess status for team ${guess.teamId}`);
-        console.log(`Correct artist: ${this.correctArtist()}`);
-        console.log(`Correct song: ${this.correctSong()}`);
-        console.log(`Guesses left:`, this.guessesLeft());
+          console.log(`Updated guess status for team ${guess.teamId}`);
+          console.log(`Correct artist: ${this.correctArtist()}`);
+          console.log(`Correct song: ${this.correctSong()}`);
+          console.log(`Guesses left:`, this.guessesLeft());
+        }
       }
     });
 
