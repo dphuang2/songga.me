@@ -487,15 +487,30 @@ export class GameStore {
     }
   }
 
-  startGame({ gameId }: { gameId: number }) {
+  async startGame({ gameId }: { gameId: number }) {
     if (this.gameRoom === null)
       throw Error("Can't start game without connection to game channel");
-    const spotifyAccessToken = SpotifyAuthStorage.getSavedAccessToken();
+    let spotifyAccessToken = SpotifyAuthStorage.getSavedAccessToken();
     if (spotifyAccessToken === null)
       throw new Error(
         "Spotify access token not found. Please authenticate with Spotify."
       );
     delete spotifyAccessToken["expires"];
+
+    // Refresh the Spotify access token before starting the game
+    try {
+      const refreshedToken = await SpotifyAuthStorage.refreshAccessToken(
+        spotifyAccessToken.refresh_token
+      );
+      console.log("Successfully refreshed Spotify access token");
+      spotifyAccessToken = refreshedToken;
+    } catch (error) {
+      console.error("Failed to refresh Spotify access token:", error);
+      throw new Error(
+        "Failed to refresh Spotify access token. Please try authenticating again."
+      );
+    }
+
     getTeamsAndPlayersForGame({ gameId }).then((teams) => {
       const bgColors = [
         "bg-red-300",
