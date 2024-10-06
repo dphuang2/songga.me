@@ -374,7 +374,6 @@ export class GameStore {
       console.log("Current game state:", JSON.stringify(this.gameState));
       const updatedTeams = this.gameState.teams.map((team) => ({
         ...team,
-        guessOrder: null,
         isTyping: false,
         outOfGuesses: false,
         guessesLeft: { artist: 1, song: 1 },
@@ -952,6 +951,7 @@ export class GameStore {
           this.gameState.teams = this.gameState.teams.map((team) => ({
             ...team,
             songGuess: null,
+            guessOrder: null,
             artistGuess: null,
             correctArtist: false,
             correctSong: false,
