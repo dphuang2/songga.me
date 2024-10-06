@@ -214,9 +214,9 @@ const IncorrectGuessesList = observer(() => {
 
   return (
     <div className="bg-red-400 border-4 border-black rounded-lg p-2 transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-base relative">
-      <div className="absolute -top-4 -right-5 w-10 h-10 bg-red-200 rounded-lg border-2 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)] z-20 transform rotate-3">
+      <div className="absolute -top-6 -right-5 w-10 h-10 bg-red-200 rounded-lg border-2 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)] z-20 transform rotate-12">
         <span className="text-xl rotate-6" role="img" aria-label="Incorrect">
-          👀
+          ❌
         </span>
       </div>
       <ul className="space-y-1 relative z-10">
