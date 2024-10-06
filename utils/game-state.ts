@@ -1135,6 +1135,19 @@ export class GameStore {
       }
     });
 
+    // Handle tab visibility changes
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          console.log("Tab became visible, sending sync event");
+          this.gameRoom?.send({
+            type: "broadcast",
+            event: SYNC_EVENT,
+          });
+        }
+      });
+    }
+
     this.gameRoom.subscribe((status) => {
       console.log(status);
       if (status === "SUBSCRIBED") {
