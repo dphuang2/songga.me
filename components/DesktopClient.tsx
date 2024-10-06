@@ -77,32 +77,6 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-yellow-400 p-4 sm:p-8 font-sans overflow-auto">
       <HiddenPlayer />
-      {!gameStore.isCurrentRoundActive() && gameStore.gameState.lastSong && (
-        <div className="fixed bottom-4 left-4 bg-blue-300 border-2 border-black p-3 rounded-lg transform rotate-1 shadow-md hover:shadow-lg transition-shadow duration-300 max-w-[240px] z-50">
-          <div className="flex items-center space-x-3">
-            {gameStore.gameState.lastSong.albumCoverImage && (
-              <div className="w-16 h-16 relative flex-shrink-0">
-                <Image
-                  src={gameStore.gameState.lastSong.albumCoverImage}
-                  alt="Album Cover"
-                  className="object-cover w-full h-full rounded-md border-2 border-black"
-                  width={64}
-                  height={64}
-                  sizes="64px"
-                />
-              </div>
-            )}
-            <div className="text-left overflow-hidden">
-              <p className="text-base font-bold break-words">
-                {gameStore.gameState.lastSong.name}
-              </p>
-              <p className="text-sm text-gray-700 break-words">
-                {gameStore.gameState.lastSong.artist}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
       <button
         onClick={async () => await gameStore.startNewRound()}
         className="fixed top-2 right-2 text-black text-xs px-2 py-1 rounded opacity-30 hover:opacity-100 transition-opacity z-50"
@@ -114,6 +88,32 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
         <div className="absolute -top-8 -left-8 bg-red-500 w-16 h-16 rounded-full border-t-4 border-l-4 border-r-8 border-b-8 border-black flex items-center justify-center">
           <MusicIcon />
         </div>
+        {!gameStore.isCurrentRoundActive() && gameStore.gameState.lastSong && (
+          <div className="absolute top-4 right-4 bg-blue-300 border-2 border-black p-3 rounded-lg transform rotate-1 shadow-md hover:shadow-lg transition-shadow duration-300 max-w-[300px]">
+            <div className="flex items-center space-x-3">
+              {gameStore.gameState.lastSong.albumCoverImage && (
+                <div className="w-16 h-16 relative flex-shrink-0">
+                  <Image
+                    src={gameStore.gameState.lastSong.albumCoverImage}
+                    alt="Album Cover"
+                    className="object-cover w-full h-full rounded-md border-2 border-black"
+                    width={64}
+                    height={64}
+                    sizes="64px"
+                  />
+                </div>
+              )}
+              <div className="text-left overflow-hidden">
+                <p className="text-base font-bold break-words">
+                  {gameStore.gameState.lastSong.name}
+                </p>
+                <p className="text-sm text-gray-700 break-words">
+                  {gameStore.gameState.lastSong.artist}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="mb-6 border-b-8 border-black pb-4">
           <div className="flex items-center gap-4 mb-4">
             <h2 className="text-4xl sm:text-5xl font-black uppercase bg-purple-300 px-4 py-2 rounded-xl border-4 border-black transform -rotate-2">
