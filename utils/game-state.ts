@@ -868,12 +868,16 @@ export class GameStore {
         console.log(`  Volume Percent: ${device.volume_percent}`);
       });
 
+      const songGameWebPlayer = devices.devices.find(
+        (device) => device.name === "Song Game Web Player"
+      );
+      const activeDevice = devices.devices.find((device) => device.is_active);
       const tvDevice = devices.devices.find((device) => device.type === "TV");
       const computerDevice = devices.devices.find(
         (device) => device.type === "Computer"
       );
-      const activeDevice = devices.devices.find((device) => device.is_active);
       const targetDevice =
+        songGameWebPlayer?.id ||
         activeDevice?.id ||
         tvDevice?.id ||
         computerDevice?.id ||
