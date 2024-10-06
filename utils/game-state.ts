@@ -100,6 +100,7 @@ export const gameStateSchema = z.object({
           .union([z.literal(1), z.literal(2), z.literal(3)])
           .nullable(),
         isTyping: z.boolean(),
+        wasPicker: z.boolean(),
         outOfGuesses: z.boolean(),
         skipped: z.boolean(),
         players: z.array(
@@ -382,11 +383,12 @@ export class GameStore {
     console.log("Resetting round");
     if (this.isHost() && this.gameState) {
       console.log("Current game state:", JSON.stringify(this.gameState));
-      const updatedTeams = this.gameState.teams.map((team) => ({
+      const updatedTeams = this.gameState.teams.map((team, index) => ({
         ...team,
         isTyping: false,
         outOfGuesses: false,
         guessesLeft: { artist: 1, song: 1 },
+        wasPicker: index === this.gameState?.pickerIndex,
       }));
 
       // Select a new picker
@@ -549,6 +551,7 @@ export class GameStore {
           teamId: team.teamId,
           score: 0,
           picker: false,
+          wasPicker: false,
           guessOrder: null,
           isTyping: false,
           outOfGuesses: false,
@@ -935,6 +938,45 @@ export class GameStore {
     return pickingTeam.teamId === teamId;
   }
 
+  static calculateAddedScore(
+    team: GameState["teams"][number],
+    wasPicker: boolean,
+    correctGuessWasMade: boolean
+  ): number {
+    if (wasPicker && correctGuessWasMade) {
+      return 2;
+    }
+
+    let addedScore = 0;
+
+    // Points for correct guesses based on guessOrder
+    if (team.guessOrder !== null) {
+      switch (team.guessOrder) {
+        case 1:
+          addedScore += 5;
+          break;
+        case 2:
+          addedScore += 3;
+          break;
+        case 3:
+          addedScore += 2;
+          break;
+      }
+
+      // Additional points for second correct guess
+      if (team.correctArtist && team.correctSong) {
+        addedScore += 2;
+      }
+    }
+
+    return addedScore;
+  }
+
+  correctGuessWasMade(): boolean {
+    if (!this.gameState) return false;
+    return this.gameState.teams.some((team) => team.guessOrder !== null);
+  }
+
   /**
    * Connect the client to the game room channel
    */
@@ -981,6 +1023,7 @@ export class GameStore {
             correctArtist: false,
             correctSong: false,
             skipped: false,
+            wasPicker: false,
           }));
 
           console.log(

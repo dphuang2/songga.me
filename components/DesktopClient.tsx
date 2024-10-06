@@ -168,7 +168,7 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
           )}
         </div>
         <div className="mt-4 mb-8 relative">
-          <div className="h-6 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 border-4 border-black rounded-lg shadow-[2px_2px_0_0_rgba(0,0,0,1)] transform flex items-center justify-center"></div>
+          <div className="h-4 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 border-4 border-black rounded-lg shadow-[2px_2px_0_0_rgba(0,0,0,1)] transform flex items-center justify-center"></div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {sortedTeams.map((team, index) => (
@@ -180,6 +180,7 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
               allScoresAreSame={gameStore.allScoresAreSame()}
               picker={gameStore.isTeamPicker(team.teamId)}
               isWaitingForNextRound={gameStore.isWaitingForNextRound()}
+              correctGuessWasMade={gameStore.correctGuessWasMade()}
             />
           ))}
         </div>
@@ -248,6 +249,7 @@ const TeamScore = observer(
     picker,
     team,
     isWaitingForNextRound,
+    correctGuessWasMade,
   }: {
     team: GameState["teams"][number];
     rank: number;
@@ -255,6 +257,7 @@ const TeamScore = observer(
     picker: boolean;
     allScoresAreSame: boolean;
     isWaitingForNextRound: boolean;
+    correctGuessWasMade: boolean;
   }) => {
     const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
 
@@ -314,7 +317,19 @@ const TeamScore = observer(
           )}
           <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-lg">
             <div className="text-lg sm:text-xl font-black">Score</div>
-            <div className="text-2xl sm:text-3xl font-black">{team.score}</div>
+            <div className="text-2xl sm:text-3xl font-black flex items-center">
+              {team.score}
+              {isWaitingForNextRound && (team.guessOrder || team.wasPicker) && (
+                <span className="ml-2 text-sm font-bold text-green-600">
+                  +
+                  {GameStore.calculateAddedScore(
+                    team,
+                    team.wasPicker,
+                    correctGuessWasMade
+                  )}
+                </span>
+              )}
+            </div>
           </div>
           <div className="mt-2">
             {team.players.map((player, index) => (
