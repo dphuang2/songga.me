@@ -363,7 +363,7 @@ const TeamScore = observer(
           )}
           {isWaitingForNextRound &&
             (team.correctArtist || team.correctSong) && (
-              <div className="absolute top-[45%] -right-1 translate-x-1/2 -translate-y-1/2 bg-lime-300 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black transform rotate-3">
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-lime-300 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
                 <span className="text-lg relative z-10">
                   {team.correctArtist && team.correctSong
                     ? "🎯"
