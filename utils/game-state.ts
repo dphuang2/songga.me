@@ -628,6 +628,7 @@ export class GameStore {
               ""
             )
             .replace(/^\s*(the|a|an)\s+/i, "")
+            .replace(/\s*\(feat\..*\)\s*$/i, "") // Remove featuring artists
             .trim();
         };
 
@@ -640,9 +641,15 @@ export class GameStore {
         }
 
         // Check if the guess is a substring of the selected song
-        if (cleanSelectedSong.includes(cleanGuess)) {
+        if (
+          cleanSelectedSong.includes(cleanGuess) ||
+          cleanGuess.includes(cleanSelectedSong)
+        ) {
           // Ensure the guess is not significantly shorter than the selected song
-          if (cleanGuess.length > cleanSelectedSong.length * 0.7) {
+          if (
+            cleanGuess.length > cleanSelectedSong.length * 0.7 ||
+            cleanSelectedSong.length > cleanGuess.length * 0.7
+          ) {
             return true;
           }
         }
