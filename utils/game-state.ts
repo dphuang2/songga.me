@@ -140,6 +140,20 @@ export class GameStore {
     this.gameCode = gameCode;
     this.initializeGameRoom();
     this.initAudioContext();
+
+    // If host, try to load game state from local storage
+    if (this.isHost()) {
+      const savedState = localStorage.getItem(`gameState_${this.gameCode}`);
+      if (savedState) {
+        try {
+          const parsedState = JSON.parse(savedState);
+          this.gameState = gameStateSchema.parse(parsedState);
+          console.log("Game state loaded from local storage:", this.gameState);
+        } catch (error) {
+          console.error("Error parsing saved game state:", error);
+        }
+      }
+    }
   }
 
   getCurrentTeam(): GameState["teams"][number] | undefined {
@@ -307,6 +321,9 @@ export class GameStore {
 
   setGameState(state: GameState) {
     this.gameState = state;
+    if (this.isHost()) {
+      localStorage.setItem(`gameState_${this.gameCode}`, JSON.stringify(state));
+    }
   }
 
   setGameRoom(room: RealtimeChannel) {
@@ -385,13 +402,13 @@ export class GameStore {
         this.gameState.spotifyAccessToken.refresh_token
       );
 
-      this.gameState = {
+      this.setGameState({
         ...this.gameState,
         selectedSong: null,
         teams: updatedTeams,
         round: this.gameState.round + 1,
         spotifyAccessToken: refreshedToken,
-      };
+      });
       this.countdown = null;
       console.log("Updated game state:", JSON.stringify(this.gameState));
     } else {
