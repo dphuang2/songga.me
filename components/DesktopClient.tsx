@@ -135,14 +135,14 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
                 )}
             </div>
             {gameStore.isWaitingForNextRound() && (
-              <div className="bg-blue-300 border-2 border-black p-3 rounded-lg transform rotate-1 shadow-md hover:shadow-lg transition-shadow duration-300 max-w-[300px]">
+              <div className="bg-blue-300 border-4 border-black p-3 rounded-lg transform rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-shadow duration-300 max-w-[300px]">
                 <div className="flex items-center space-x-3">
                   {gameStore.gameState.lastSong.albumCoverImage && (
                     <div className="w-16 h-16 relative flex-shrink-0">
                       <Image
                         src={gameStore.gameState.lastSong.albumCoverImage}
                         alt="Album Cover"
-                        className="object-cover w-full h-full rounded-md border-2 border-black"
+                        className="object-cover w-full h-full rounded-md border-4 border-black"
                         width={64}
                         height={64}
                         sizes="64px"
@@ -363,7 +363,7 @@ const TeamScore = observer(
           )}
           {isWaitingForNextRound &&
             (team.correctArtist || team.correctSong) && (
-              <div className="absolute top-[45%] -right-1 translate-x-1/2 -translate-y-1/2 bg-lime-300 rounded-full w-8 h-8 flex items-center justify-center border-2 border-black shadow-[0_4px_6px_rgba(0,0,0,0.1),0_2px_4px_rgba(0,0,0,0.06)]">
+              <div className="absolute top-[45%] -right-1 translate-x-1/2 -translate-y-1/2 bg-lime-300 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black transform rotate-3">
                 <span className="text-lg relative z-10">
                   {team.correctArtist && team.correctSong
                     ? "🎯"
