@@ -420,17 +420,17 @@ export class GameStore {
         wasPicker: index === this.gameState?.pickerIndex,
       }));
 
+      // Refresh spotify access token
+      const refreshedToken = await SpotifyAuthStorage.refreshAccessToken(
+        this.gameState.spotifyAccessToken.refresh_token
+      );
+
       // Select a new picker
       const currentPickerIndex = this.gameState.pickerIndex;
       const newPickerIndex = (currentPickerIndex + 1) % updatedTeams.length;
       this.gameState.pickerIndex = newPickerIndex;
       console.log(
         `New picker selected: Team ${updatedTeams[newPickerIndex].teamId}`
-      );
-
-      // Refresh spotify access token
-      const refreshedToken = await SpotifyAuthStorage.refreshAccessToken(
-        this.gameState.spotifyAccessToken.refresh_token
       );
 
       this.setGameState({
@@ -1064,6 +1064,7 @@ export class GameStore {
             correctSong: false,
             skipped: false,
             wasPicker: false,
+            outOfGuesses: false,
           }));
 
           console.log(

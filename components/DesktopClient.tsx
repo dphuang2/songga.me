@@ -220,7 +220,7 @@ const IncorrectGuessesList = observer(() => {
     <div className="bg-red-400 border-4 border-black rounded-lg p-2 transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-base relative">
       <div className="absolute -top-6 -right-5 w-10 h-10 bg-red-200 rounded-lg border-2 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)] z-20 transform rotate-12">
         <span className="text-xl rotate-6" role="img" aria-label="Incorrect">
-          ❌
+          ⛔
         </span>
       </div>
       <ul className="space-y-1 relative z-10">
@@ -291,7 +291,7 @@ const TeamScore = observer(
     };
 
     return (
-      <div className={clsx("relative")}>
+      <div className={clsx("relative mb-6")}>
         <div
           className={`${
             team.bgColor
@@ -396,7 +396,8 @@ const TeamScore = observer(
             (team.correctArtist ||
               team.correctSong ||
               team.guessOrder ||
-              team.skipped) && (
+              team.skipped ||
+              team.outOfGuesses) && (
               <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 flex items-center space-x-1">
                 {team.guessOrder && (
                   <div className="bg-yellow-300 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
@@ -422,6 +423,11 @@ const TeamScore = observer(
                 {team.skipped && (
                   <div className="bg-red-600 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
                     <span className="text-lg relative z-10">⏭️</span>
+                  </div>
+                )}
+                {team.outOfGuesses && (
+                  <div className="bg-gray-500 rounded-full w-8 h-8 flex items-center justify-center border-t-2 border-l-2 border-b-4 border-r-4 border-black rotate-3">
+                    <span className="text-lg relative z-10">🚫</span>
                   </div>
                 )}
               </div>
