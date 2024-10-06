@@ -803,42 +803,6 @@ export class GameStore {
     }
   }
 
-  async testSpotify() {
-    console.log("Starting testSpotify function");
-    try {
-      console.log(
-        "NEXT_PUBLIC_SPOTIFY_ID:",
-        process.env.NEXT_PUBLIC_SPOTIFY_ID
-      );
-      console.log("spotifyAccessToken:", this.gameState?.spotifyAccessToken);
-
-      if (this.gameState?.spotifyAccessToken === undefined) {
-        console.log("Spotify access token is undefined");
-        return null;
-      }
-
-      console.log("Initializing Spotify API with access token");
-      const spotify = SpotifyApi.withAccessToken(
-        process.env.NEXT_PUBLIC_SPOTIFY_ID!,
-        this.gameState.spotifyAccessToken
-      );
-
-      console.log("Fetching Spotify user profile");
-      const spotifyProfile = await spotify.currentUser.profile();
-      console.log("Spotify profile fetched:", spotifyProfile);
-
-      console.log("Fetching top artists");
-      const topArtists = await spotify.currentUser.topItems("artists");
-      console.log("Top artists fetched:", topArtists);
-
-      console.log("testSpotify function completed successfully");
-      return { spotifyProfile, topArtists };
-    } catch (error) {
-      console.error("Error in testSpotify function:", error);
-      throw error;
-    }
-  }
-
   isTeamPicker(teamId: number): boolean {
     if (!this.gameState) return false;
     const pickingTeam = this.gameState.teams[this.gameState.pickerIndex];
