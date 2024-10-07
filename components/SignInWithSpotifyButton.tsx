@@ -31,7 +31,7 @@ async function signInWithSpotify() {
     provider: "spotify",
     options: {
       scopes: SPOTIFY_SCOPES,
-      redirectTo: "http://localhost:3000/auth/callback",
+      redirectTo: process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URL,
     },
   });
   if (error) console.error(error);
