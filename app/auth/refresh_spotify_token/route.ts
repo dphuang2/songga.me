@@ -10,13 +10,13 @@ export async function GET(request: Request) {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization: `Basic ${btoa(
-        `${process.env.NEXT_PUBLIC_SPOTIFY_ID}:${process.env.NEXT_PUBLIC_SPOTIFY_SECRET}`
+        `${process.env.SPOTIFY_ID}:${process.env.SPOTIFY_SECRET}`
       ).toString()}`,
     },
     body: new URLSearchParams({
       grant_type: "refresh_token",
       refresh_token: refresh_token!,
-      client_id: process.env.NEXT_PUBLIC_SPOTIFY_ID!,
+      client_id: process.env.SPOTIFY_ID!,
     }),
   };
 
