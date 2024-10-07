@@ -24,7 +24,7 @@ export default async function Index() {
           <JoinGameForm />
         </div>
 
-        <div className="mb-6 bg-green-300 border-4 border-black p-4 rounded-xl transform rotate-1">
+        <div className="mb-6 bg-green-200 border-4 border-black p-4 rounded-xl transform rotate-1">
           <h2 className="text-2xl font-bold mb-2">How does it work?</h2>
           <p className="text-lg mb-4">It's quite simple, actually:</p>
           <ul className="list-disc list-inside space-y-2">
@@ -49,10 +49,25 @@ export default async function Index() {
           </ul>
           <h3 className="text-xl font-bold mt-4 mb-2">Scoring:</h3>
           <ul className="list-disc list-inside space-y-2">
-            <li>First correct guess: 5 points</li>
-            <li>Second correct guess: 3 points</li>
-            <li>Third correct guess: 2 points</li>
-            <li>The picker gets 2 points if someone guesses correctly</li>
+            <li>
+              First correct{" "}
+              <span className="font-bold text-green-600">guesser</span>: 5
+              points
+            </li>
+            <li>
+              Second correct{" "}
+              <span className="font-bold text-green-600">guesser</span>: 3
+              points
+            </li>
+            <li>
+              Third correct{" "}
+              <span className="font-bold text-green-600">guesser</span>: 2
+              points
+            </li>
+            <li>
+              The <span className="font-bold text-blue-600">picker</span> gets 2
+              points if someone guesses correctly
+            </li>
             <li>
               "Double dipping": If you're in the top 3 and guess both the song
               and artist, you get points for both (e.g., 5 + 2 = 7 points for
@@ -60,8 +75,8 @@ export default async function Index() {
             </li>
           </ul>
           <p className="mt-2">
-            Teams can guess both the artist and song, with one guess for each
-            per round.
+            Teams can guess both the artist and song, with 1 guess for each per
+            round.
           </p>
         </div>
       </div>
