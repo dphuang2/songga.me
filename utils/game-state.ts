@@ -603,6 +603,7 @@ export class GameStore {
         };
       });
 
+      if (spotifyAccessToken === null) return;
       const state: GameState = {
         selectedSong: null,
         lastSong: null,
