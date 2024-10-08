@@ -87,6 +87,7 @@ export const gameStateSchema = z.object({
   round: z.number(),
   spotifyAccessToken: spotifyAccessTokenSchema,
   pickerIndex: z.number(),
+  roundStartTime: z.number().nullable(),
   teams: z.array(
     z
       .object({
@@ -122,6 +123,7 @@ export const gameStateSchema = z.object({
         ),
         artistGuess: z.string().nullable(),
         songGuess: z.string().nullable(),
+        guessTime: z.number().nullable(),
       })
       .merge(guessStatusSchema)
   ),
@@ -450,6 +452,7 @@ export class GameStore {
         teams: updatedTeams,
         round: this.gameState.round + 1,
         spotifyAccessToken: refreshedToken,
+        roundStartTime: null,
       });
       this.countdown = null;
       console.log("Updated game state:", JSON.stringify(this.gameState));
@@ -612,6 +615,7 @@ export class GameStore {
           artistGuess: null,
           songGuess: null,
           skipped: false,
+          guessTime: null,
         };
       });
 
@@ -622,6 +626,7 @@ export class GameStore {
         pickerIndex: Math.floor(Math.random() * initialTeams.length),
         round: 1,
         teams: initialTeams,
+        roundStartTime: null,
         spotifyAccessToken: spotifyAccessToken,
       };
 
@@ -1163,7 +1168,12 @@ export class GameStore {
             skipped: false,
             wasPicker: false,
             outOfGuesses: false,
+            guessTime: null,
           }));
+
+          const roundStartTime = new Date().getTime();
+          console.log(`Round start time: ${roundStartTime}`);
+          this.gameState.roundStartTime = roundStartTime;
 
           console.log(
             "Updated game state with new song and reset guesses:",
@@ -1292,6 +1302,7 @@ export class GameStore {
                     ...team,
                     guessOrder: nextGuessOrder,
                     score: team.score + pointsAwarded,
+                    guessTime: new Date().getTime(),
                   };
                 }
               } else {

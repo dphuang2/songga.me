@@ -181,6 +181,7 @@ const Scoreboard = observer(({}: Omit<GameProps, "currentPlayerId">) => {
               picker={gameStore.isTeamPicker(team.teamId)}
               isWaitingForNextRound={gameStore.isWaitingForNextRound()}
               correctGuessWasMade={gameStore.correctGuessWasMade()}
+              roundStartTime={gameStore.gameState!.roundStartTime}
             />
           ))}
         </div>
@@ -250,6 +251,7 @@ const TeamScore = observer(
     team,
     isWaitingForNextRound,
     correctGuessWasMade,
+    roundStartTime,
   }: {
     team: GameState["teams"][number];
     rank: number;
@@ -258,6 +260,7 @@ const TeamScore = observer(
     allScoresAreSame: boolean;
     isWaitingForNextRound: boolean;
     correctGuessWasMade: boolean;
+    roundStartTime: number | null;
   }) => {
     const rotation = Math.random() > 0.5 ? "rotate-2" : "-rotate-2";
 
@@ -361,6 +364,11 @@ const TeamScore = observer(
                 }`}
               >
                 {getGuessOrderLabel(team.guessOrder)} Correct
+                {team.guessTime && roundStartTime !== null && (
+                  <span className="ml-1 text-xs font-normal opacity-75">
+                    ({((team.guessTime - roundStartTime) / 1000).toFixed(1)}s)
+                  </span>
+                )}
               </span>
             </div>
           )}
