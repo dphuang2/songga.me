@@ -315,6 +315,8 @@ const Picker = observer(() => {
   );
 });
 
+export type AllQueryResults = { [key: string]: { tracks: Track[] } };
+
 const Guesser = observer(() => {
   const [artistSearch, setArtistSearch] = useState("");
   const [songSearch, setSongSearch] = useState("");
@@ -325,6 +327,8 @@ const Guesser = observer(() => {
   const gameState = useGameStore();
   const artistSearchRef = useRef("");
   const songSearchRef = useRef("");
+
+  const queryResults = useRef<AllQueryResults>({});
 
   useEffect(() => {
     // Send sync event when component mounts
@@ -343,6 +347,7 @@ const Guesser = observer(() => {
       setSongResults([]);
       artistSearchRef.current = "";
       songSearchRef.current = "";
+      queryResults.current = {};
     };
 
     resetState();
@@ -385,6 +390,7 @@ const Guesser = observer(() => {
               setArtistResults(results.artists.items);
             } else if (type === "song" && results.tracks) {
               setSongResults(results.tracks.items);
+              queryResults.current[query] = { tracks: results.tracks.items };
             }
           }
         }
@@ -409,6 +415,26 @@ const Guesser = observer(() => {
   const handleGuess = (type: "artist" | "song", item: Artist | Track) => {
     const guessValue = item.name;
     console.log(`Guessed ${type}: ${guessValue}`);
+    if (type === "artist") {
+      setArtistSearch(guessValue);
+      setArtistResults([]);
+      artistSearchRef.current = guessValue;
+    } else {
+      setSongSearch(guessValue);
+      setSongResults([]);
+      songSearchRef.current = guessValue;
+    }
+    if (
+      type === "song" &&
+      gameState.didCheat(queryResults.current, guessValue)
+    ) {
+      gameState.setOwnTeamGuessesLeft({ artist: 0, song: 0 });
+      gameState.sendIsTyping(false);
+      gameState.sendGuess({
+        type: "cheater",
+      });
+      return;
+    }
     const newGuessesLeft = {
       ...gameState.guessesLeft(),
       [type]: Math.max(0, gameState.guessesLeft()[type] - 1),
@@ -436,16 +462,6 @@ const Guesser = observer(() => {
       correctArtist: gameState.correctArtist(),
       correctSong: gameState.correctSong(),
     } as GuessSongOrArtist);
-
-    if (type === "artist") {
-      setArtistSearch(guessValue);
-      setArtistResults([]);
-      artistSearchRef.current = guessValue;
-    } else {
-      setSongSearch(guessValue);
-      setSongResults([]);
-      songSearchRef.current = guessValue;
-    }
   };
 
   const handleSkip = useCallback(() => {

@@ -364,6 +364,19 @@ const TeamScore = observer(
               </span>
             </div>
           )}
+          {team.cheater && (
+            <div
+              className={clsx(
+                "absolute rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black",
+                "bg-orange-500",
+                "bottom-0 right-0 transform translate-x-1/2 translate-y-1/2 -rotate-12"
+              )}
+            >
+              <span className="text-xs sm:text-sm font-bold text-white text-nowrap">
+                CHEATER!! 🕵️
+              </span>
+            </div>
+          )}
           {!isWaitingForNextRound && team.outOfGuesses && (
             <div className="absolute -top-2 -right-2 bg-red-500 rotate-6 rounded-full p-1 border-t-2 border-l-2 border-b-4 border-r-4 border-black">
               <span className="text-xs sm:text-sm font-bold text-white">

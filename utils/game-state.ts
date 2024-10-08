@@ -11,6 +11,7 @@ import {
   SpotifyApi,
   Track,
 } from "@spotify/web-api-ts-sdk";
+import { AllQueryResults } from "@/components/MobileClient";
 
 const GUESS_EVENT = "guess";
 const IS_TYPING_EVENT = "is-typing";
@@ -53,7 +54,16 @@ export const guessSchemaSkip = z.object({
   teamId: z.number(),
 });
 
-export const guessSchema = z.union([guessSchemaSongOrArtist, guessSchemaSkip]);
+export const guessSchemaCheater = z.object({
+  type: z.literal("cheater"),
+  teamId: z.number(),
+});
+
+export const guessSchema = z.union([
+  guessSchemaSongOrArtist,
+  guessSchemaSkip,
+  guessSchemaCheater,
+]);
 
 export type Guess = z.infer<typeof guessSchema>;
 
@@ -102,6 +112,7 @@ export const gameStateSchema = z.object({
         isTyping: z.boolean(),
         wasPicker: z.boolean(),
         outOfGuesses: z.boolean(),
+        cheater: z.boolean(),
         skipped: z.boolean(),
         players: z.array(
           z.object({
@@ -269,7 +280,7 @@ export class GameStore {
     );
 
     const teamsOutOfGuessesOrSkipped = nonPickerTeams.filter(
-      (team) => team.outOfGuesses || team.skipped
+      (team) => team.outOfGuesses || team.skipped || team.cheater
     );
     console.log(
       "isRoundOver: Teams out of guesses or skipped:",
@@ -582,6 +593,7 @@ export class GameStore {
           picker: false,
           wasPicker: false,
           guessOrder: null,
+          cheater: false,
           isTyping: false,
           outOfGuesses: false,
           bgColor,
@@ -648,6 +660,89 @@ export class GameStore {
 
   connectedToGameRoom(): boolean {
     return this.gameRoom !== null;
+  }
+
+  didCheat(allQueryResults: AllQueryResults, guess: string): boolean {
+    debugger;
+    const isCorrect = this.isGuessCorrect("song", guess);
+    if (!isCorrect) return false;
+
+    const selectedSongName =
+      this.gameState?.selectedSong?.name?.toLowerCase() || "";
+    const selectedArtistName =
+      this.gameState?.selectedSong?.artist?.toLowerCase() || "";
+
+    // Check if the song name includes at least one normal (Latin) character
+    if (!/[a-zA-Z]/.test(selectedSongName)) {
+      return false;
+    }
+
+    for (const [query, results] of Object.entries(allQueryResults)) {
+      const queryLower = query.toLowerCase();
+
+      // Skip queries shorter than 8 characters
+      if (queryLower.length < 5) continue;
+
+      // Skip if the query matches the artist name
+      if (this.lcsSimilarity(queryLower, selectedArtistName) >= 0.8) continue;
+
+      // Check if the query is significantly different from the selected song name
+      if (this.lcsSimilarity(queryLower, selectedSongName) < 0.3) {
+        // Check if any track in the results matches the correct guess
+        if (
+          results.tracks.some((track) =>
+            this.isGuessCorrect("song", track.name)
+          )
+        ) {
+          // This is only true when Spotify returns a lyric match in the search results
+          // Spotify's search can sometimes return tracks based on lyric matches,
+          // which could indicate that the user searched for lyrics to find the song
+          return true; // Caught a potential cheater
+        }
+      }
+
+      // Additional check: If the query contains words that are not in the song name
+      const queryWords = queryLower.split(/\s+/);
+      const songWords = selectedSongName.split(/\s+/);
+      const differentWords = queryWords.filter(
+        (word) => !songWords.includes(word) && word.length > 3
+      );
+      if (
+        differentWords.length > 1 &&
+        results.tracks.some((track) => this.isGuessCorrect("song", track.name))
+      ) {
+        return true; // Caught a potential cheater
+      }
+    }
+
+    return false;
+  }
+
+  private lcsSimilarity(s1: string, s2: string): number {
+    const lcsLength = this.longestCommonSubstring(s1, s2);
+    const minLength = Math.min(s1.length, s2.length);
+    return lcsLength / minLength;
+  }
+
+  private longestCommonSubstring(s1: string, s2: string): number {
+    const m = s1.length;
+    const n = s2.length;
+    const dp: number[][] = Array(m + 1)
+      .fill(null)
+      .map(() => Array(n + 1).fill(0));
+
+    let maxLength = 0;
+
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        if (s1[i - 1] === s2[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+          maxLength = Math.max(maxLength, dp[i][j]);
+        }
+      }
+    }
+
+    return maxLength;
   }
 
   isGuessCorrect(type: "artist" | "song", guess: string): boolean {
@@ -1063,6 +1158,8 @@ export class GameStore {
             artistGuess: null,
             correctArtist: false,
             correctSong: false,
+            isTyping: false,
+            cheater: false,
             skipped: false,
             wasPicker: false,
             outOfGuesses: false,
@@ -1097,7 +1194,22 @@ export class GameStore {
       const guess = guessSchema.parse(payload);
 
       if (this.isHost()) {
-        if (guess.type === "skip") {
+        if (guess.type === "cheater") {
+          // Update the team's guess, correctness, and guesses left
+          const updatedTeams = this.gameState!.teams.map((team) => {
+            if (team.teamId === guess.teamId) {
+              return {
+                ...team,
+                cheater: true,
+                guessesLeft: { artist: 0, song: 0 },
+                isTyping: false, // Reset typing status after a guess
+              };
+            }
+            return team;
+          });
+          // Update the game state with the new teams
+          this.setGameStateTeams(updatedTeams);
+        } else if (guess.type === "skip") {
           // Update the team's guess, correctness, and guesses left
           const updatedTeams = this.gameState!.teams.map((team) => {
             if (team.teamId === guess.teamId) {
@@ -1112,7 +1224,7 @@ export class GameStore {
           });
           // Update the game state with the new teams
           this.setGameStateTeams(updatedTeams);
-        } else {
+        } else if (guess.type === "artist" || guess.type === "song") {
           // Check if the guess is correct
           const isCorrect = this.isGuessCorrect(guess.type, guess.value);
 
