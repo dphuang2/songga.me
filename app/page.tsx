@@ -51,18 +51,20 @@ export default async function Index() {
           <ul className="list-disc list-inside space-y-2">
             <li>
               First correct{" "}
-              <span className="font-bold text-green-600">guesser</span>: 5
-              points
+              <span className="font-bold text-green-600">
+                guesser (song or artist)
+              </span>
+              : 5 (+2 for double dipping) points
             </li>
             <li>
               Second correct{" "}
-              <span className="font-bold text-green-600">guesser</span>: 3
-              points
+              <span className="font-bold text-green-600">guesser</span>: 3 (+2
+              for double dipping) points
             </li>
             <li>
               Third correct{" "}
-              <span className="font-bold text-green-600">guesser</span>: 2
-              points
+              <span className="font-bold text-green-600">guesser</span>: 2 (+2
+              for double dipping) points
             </li>
             <li>
               The <span className="font-bold text-blue-600">picker</span> gets 2
@@ -70,7 +72,7 @@ export default async function Index() {
             </li>
             <li>
               "Double dipping": If you're in the top 3 and guess both the song
-              and artist, you get points for both (e.g., 5 + 2 = 7 points for
+              and artist, you get 2 extra points (e.g., 5 + 2 = 7 points for
               first place)
             </li>
           </ul>
